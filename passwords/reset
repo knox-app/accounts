@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password</title>
+    <style>
+        /* --- Modern CSS Styling --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-color: #4A90E2;
+            --success-color: #50E3C2;
+            --error-color: #E74C3C;
+            --light-grey: #f4f7f6;
+            --dark-text: #333;
+            --light-text: #f9f9f9;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .card h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark-text);
+        }
+
+        .card p {
+            color: #777;
+            margin-bottom: 30px;
+        }
+        
+        #user-identifier {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        
+        .message.success {
+            background-color: #e4f8f3;
+            color: #1aaa8d;
+        }
+        
+        .message.error {
+            background-color: #fbeae7;
+            color: var(--error-color);
+        }
+        
+        /* Spinner for loading state */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s ease infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card" id="main-card">
+            
+            <!-- View 1: Initial Loading State -->
+            <div id="loading-view">
+                <h1>Verifying User</h1>
+                <p>Please wait while we find your account...</p>
+                <div class="spinner"></div>
+            </div>
+
+            <!-- View 2: Password Reset Form -->
+            <div id="reset-form-view" style="display: none;">
+                <h1>Reset Your Password</h1>
+                <p>Enter a new password for <strong id="user-identifier"></strong>.</p>
+                <form id="password-reset-form">
+                    <div class="input-group">
+                        <input type="password" id="new-password" placeholder="New Password" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="confirm-password" placeholder="Confirm New Password" required>
+                    </div>
+                    <button type="submit" class="btn" id="submit-btn">Update Password</button>
+                    <div id="form-message"></div>
+                </form>
+            </div>
+
+            <!-- View 3: Final State (Success or Error) -->
+            <div id="final-view" style="display: none;">
+                <h1 id="final-title"></h1>
+                <p id="final-message"></p>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+            authDomain: "xperts-metadata.firebaseapp.com",
+            projectId: "xperts-metadata",
+            storageBucket: "xperts-metadata.appspot.com",
+            messagingSenderId: "514845910910",
+            appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+            measurementId: "G-CQ5KWGJSZB"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- T9 Mapping and Helper Functions ---
+        const t9Map = {
+            'a': '2', 'b': '2', 'c': '2',
+            'd': '3', 'e': '3', 'f': '3',
+            'g': '4', 'h': '4', 'i': '4',
+            'j': '5', 'k': '5', 'l': '5',
+            'm': '6', 'n': '6', 'o': '6',
+            'p': '7', 'q': '7', 'r': '7', 's': '7',
+            't': '8', 'u': '8', 'v': '8',
+            'w': '9', 'x': '9', 'y': '9', 'z': '9'
+        };
+        
+        function convertUsernameToT9(username) {
+            return username.toLowerCase().split('').map(char => t9Map[char] || '').join('');
+        }
+        
+        function showView(viewId) {
+            document.getElementById('loading-view').style.display = 'none';
+            document.getElementById('reset-form-view').style.display = 'none';
+            document.getElementById('final-view').style.display = 'none';
+            document.getElementById(viewId).style.display = 'block';
+        }
+
+        // --- Main Application Logic ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const numericIdFromUrl = urlParams.get('id');
+
+            if (!numericIdFromUrl) {
+                showView('final-view');
+                document.getElementById('final-title').innerText = 'Invalid Link';
+                document.getElementById('final-message').innerText = 'The user ID is missing from the URL. Please check the link and try again.';
+                return;
+            }
+
+            try {
+                const usersCollection = db.collection("users");
+                const snapshot = await usersCollection.get();
+                let foundUserDoc = null;
+
+                if (snapshot.empty) {
+                    throw new Error("No users found in the database.");
+                }
+
+                snapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.perplexityId) {
+                        const username = userData.perplexityId.split('@')[0];
+                        const t9Username = convertUsernameToT9(username);
+                        if (t9Username === numericIdFromUrl) {
+                            foundUserDoc = doc;
+                        }
+                    }
+                });
+
+                if (foundUserDoc) {
+                    // User found, show the reset form
+                    showView('reset-form-view');
+                    document.getElementById('user-identifier').innerText = foundUserDoc.data().perplexityId;
+                    
+                    const form = document.getElementById('password-reset-form');
+                    form.addEventListener('submit', (e) => handlePasswordUpdate(e, foundUserDoc));
+
+                } else {
+                    // User not found
+                    showView('final-view');
+                    document.getElementById('final-title').innerText = 'User Not Found';
+                    document.getElementById('final-message').innerText = 'We could not find an account matching the provided ID. Please verify your ID and try again.';
+                }
+
+            } catch (error) {
+                console.error("Error finding user:", error);
+                showView('final-view');
+                document.getElementById('final-title').innerText = 'An Error Occurred';
+                document.getElementById('final-message').innerText = 'There was a problem connecting to the database. Please try again later.';
+            }
+        });
+        
+        async function handlePasswordUpdate(event, userDoc) {
+            event.preventDefault();
+            
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const formMessage = document.getElementById('form-message');
+            
+            formMessage.innerHTML = ''; // Clear previous messages
+            
+            if (newPassword.length < 6) {
+                formMessage.innerHTML = `<p class="message error">Password must be at least 6 characters long.</p>`;
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                formMessage.innerHTML = `<p class="message error">Passwords do not match. Please try again.</p>`;
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Updating...";
+            
+            try {
+                // --- THIS IS INSECURE! In a real app, hash the password before saving. ---
+                await userDoc.ref.update({
+                    password: newPassword
+                });
+                
+                showView('final-view');
+                document.getElementById('final-title').innerText = 'Success!';
+                document.getElementById('final-message').innerText = 'Your password has been updated successfully. You can now close this page.';
+
+            } catch(error) {
+                console.error("Error updating password:", error);
+                formMessage.innerHTML = `<p class="message error">Failed to update password. Please try again.</p>`;
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Update Password";
+            }
+        }
+    </script>
+
+</body>
+</html>
