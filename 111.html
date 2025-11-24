@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in to X</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #0f1419;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Form & Input Styles */
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 0.75rem;
+            border: 1px solid #cfd9de;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: transparent;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1d9bf0;
+            box-shadow: 0 0 0 1px #1d9bf0;
+        }
+
+        .form-label {
+            position: absolute;
+            top: 1rem;
+            left: 0.75rem;
+            color: #536471;
+            pointer-events: none;
+            transition: all 0.2s ease-out;
+        }
+
+        .form-input:focus + .form-label,
+        .form-input:not(:placeholder-shown) + .form-label {
+            top: 0.25rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+            color: #1d9bf0;
+            background-color: #ffffff;
+            padding: 0 0.25rem;
+        }
+
+        .error-message {
+            color: #d93025;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        
+        .form-input.error {
+            border-color: #d93025;
+        }
+
+        /* Button Styles */
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 9999px; /* Pill shape */
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #0f1419;
+            color: #ffffff;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #272c30;
+        }
+        .btn-primary:disabled {
+            background-color: #536471;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #ffffff;
+            color: #0f1419;
+            border: 1px solid #cfd9de;
+            margin-top: 1rem;
+        }
+        .btn-secondary:hover {
+            background-color: #f7f9f9;
+        }
+
+        /* Helper */
+        .hidden {
+            display: none;
+        }
+    </style>
+    <!-- Firebase and EmailJS SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo">X</div>
+        <div id="initial-step">
+            <h1>To get started, enter your credentials</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="text" id="identifier" class="form-input" placeholder=" " required>
+                    <label for="identifier" class="form-label">Phone, email, or @username</label>
+                </div>
+                <p id="identifier-error" class="error-message"></p>
+                <button type="submit" id="next-btn" class="btn btn-primary">Next</button>
+            </form>
+            <button id="forgot-password-btn" class="btn btn-secondary">Forgot password?</button>
+        </div>
+
+        <div id="otp-step" class="hidden">
+            <h1>We sent you a code</h1>
+            <p>Enter it below to verify <strong id="user-identifier-display"></strong>.</p>
+            <form id="otp-form">
+                <div class="form-group">
+                    <input type="text" id="otp" class="form-input" placeholder=" " required maxlength="6">
+                    <label for="otp" class="form-label">Verification code</label>
+                </div>
+                 <p id="otp-error" class="error-message"></p>
+                <button type="submit" id="verify-btn" class="btn btn-primary">Verify</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", // Replace with your actual API key
+            authDomain: "xperts-metadata.firebaseapp.com",
+            projectId: "xperts-metadata",
+            storageBucket: "xperts-metadata.firebasestorage.app",
+            messagingSenderId: "514845910910",
+            appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+            measurementId: "G-CQ5KWGJSZB"
+        };
+
+        const emailjsConfig = {
+            serviceID: 'service_ijwq7ob',
+            templateID: 'template_15fxi9x',
+            publicKey: 'Yr9MutUoHOEONnFgn'
+        };
+
+        // --- INITIALIZATION ---
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        emailjs.init(emailjsConfig.publicKey);
+
+        // --- DOM ELEMENTS ---
+        const loginForm = document.getElementById('login-form');
+        const otpForm = document.getElementById('otp-form');
+        const identifierInput = document.getElementById('identifier');
+        const otpInput = document.getElementById('otp');
+        const nextBtn = document.getElementById('next-btn');
+        const verifyBtn = document.getElementById('verify-btn');
+        const initialStepDiv = document.getElementById('initial-step');
+        const otpStepDiv = document.getElementById('otp-step');
+        const userIdentifierDisplay = document.getElementById('user-identifier-display');
+        const identifierError = document.getElementById('identifier-error');
+        const otpError = document.getElementById('otp-error');
+        
+        // --- LOGIN LOGIC ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const identifier = identifierInput.value.trim().toLowerCase();
+            identifierError.textContent = '';
+            identifierInput.classList.remove('error');
+            nextBtn.disabled = true;
+            nextBtn.textContent = 'Checking...';
+
+            if (!identifier) {
+                identifierError.textContent = 'Please enter your email or Ignite ID.';
+                identifierInput.classList.add('error');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Next';
+                return;
+            }
+
+            try {
+                // Determine search field based on input format
+                const isIgniteId = identifier.endsWith('@ignite.com');
+                const searchField = isIgniteId ? 'igniteId' : 'recoveryEmail';
+                
+                const userQuery = await db.collection('users').where(searchField, '==', identifier).limit(1).get();
+
+                if (userQuery.empty) {
+                    // User not found, redirect to signup
+                    window.location.href = '2.html';
+                } else {
+                    // User found, send OTP
+                    const userData = userQuery.docs[0].data();
+                    const userEmail = userData.recoveryEmail; // Always send OTP to recovery email
+                    
+                    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                    
+                    // Store OTP and user email temporarily
+                    sessionStorage.setItem('otp', otp);
+                    sessionStorage.setItem('userEmail', userEmail);
+                    
+                    // EmailJS parameters. IMPORTANT: these must match your template variables.
+                    const templateParams = {
+                        to_email: userEmail,
+                        otp_code: otp,
+                    };
+
+                    await emailjs.send(emailjsConfig.serviceID, emailjsConfig.templateID, templateParams);
+                    
+                    // Switch to OTP verification view
+                    userIdentifierDisplay.textContent = userEmail;
+                    initialStepDiv.classList.add('hidden');
+                    otpStepDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Error during login process:", error);
+                identifierError.textContent = 'An error occurred. Please try again.';
+                identifierInput.classList.add('error');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Next';
+            }
+        });
+
+        // --- OTP VERIFICATION LOGIC ---
+        otpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enteredOtp = otpInput.value.trim();
+            const storedOtp = sessionStorage.getItem('otp');
+            otpError.textContent = '';
+            otpInput.classList.remove('error');
+            
+            if (enteredOtp === storedOtp) {
+                // Success: OTP matches
+                alert('Login successful!');
+                sessionStorage.removeItem('otp'); // Clean up
+                sessionStorage.removeItem('userEmail');
+                window.location.href = 'https://abc.xyz'; // Redirect to target page
+            } else {
+                // Failure: OTP does not match
+                otpError.textContent = 'Invalid verification code. Please try again.';
+                otpInput.classList.add('error');
+            }
+        });
+
+        document.getElementById('forgot-password-btn').addEventListener('click', () => {
+            alert("Forgot Password functionality is not yet implemented.");
+        });
+
+    </script>
+</body>
+</html>
