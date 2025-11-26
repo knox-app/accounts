@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ignite Keep - Dashboard</title>
+    <!-- Firebase Compat SDKs (Matching your login page version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #202124;
+            --card-color: #2d2e30; // Dark grey like Keep
+            --text-color: #e8eaed;
+            --secondary-text: #9aa0a6;
+            --accent: #fbbc04; /* Keep Yellow */
+            --border: #5f6368;
+        }
+
+        body {
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand { font-size: 22px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 35px; height: 35px; background: var(--accent); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--text-color); padding: 5px 15px; border-radius: 4px; cursor: pointer; }
+
+        /* Create Note Section */
+        .create-wrapper { display: flex; justify-content: center; margin-top: 30px; padding: 0 10px; }
+        .create-box {
+            background: var(--card-color);
+            width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.6);
+            border: 1px solid transparent;
+            overflow: hidden;
+            transition: 0.2s;
+        }
+        .create-box.active { border-color: var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        
+        input, textarea {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .title-input {
+            padding: 15px 15px 5px 15px;
+            font-weight: bold;
+            font-size: 16px;
+            display: none; /* Hidden by default */
+        }
+        
+        .note-input {
+            padding: 12px 15px;
+            font-size: 14px;
+            resize: none;
+            height: 45px;
+        }
+
+        .create-actions {
+            display: none;
+            justify-content: space-between;
+            padding: 5px 15px 10px;
+        }
+        
+        .btn-text { background: none; border: none; color: var(--text-color); cursor: pointer; font-weight: bold; padding: 8px 15px; border-radius: 4px; }
+        .btn-text:hover { background: rgba(255,255,255,0.1); }
+
+        /* Notes Grid */
+        .notes-container {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+            align-items: start;
+        }
+
+        .note-card {
+            background: var(--card-color);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: default;
+            position: relative;
+            transition: 0.2s;
+            white-space: pre-wrap;
+        }
+        .note-card:hover { border-color: #999; }
+        
+        .note-card h3 { margin: 0 0 10px 0; font-size: 16px; font-weight: 500; }
+        .note-card p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--secondary-text); }
+        
+        .card-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .note-card:hover .card-actions { opacity: 1; }
+        
+        .icon-btn { cursor: pointer; background: transparent; border: none; font-size: 16px; opacity: 0.7; }
+        .icon-btn:hover { opacity: 1; transform: scale(1.1); }
+
+        .shared-badge {
+            position: absolute;
+            top: 10px; right: 10px;
+            font-size: 16px;
+        }
+
+        /* Modal (Edit & Share) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: var(--card-color);
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            border: 1px solid var(--border);
+        }
+
+        /* Helper Classes */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span style="color:var(--accent); font-size: 28px;">🔥</span> Ignite Keep
+        </div>
+        <div class="user-profile">
+            <div id="userIgniteId" style="font-size: 14px; color: var(--secondary-text);"></div>
+            <div class="avatar" id="userAvatar">U</div>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Create Note -->
+    <div class="create-wrapper">
+        <div class="create-box" id="createBox">
+            <input type="text" class="title-input" id="newTitle" placeholder="Title">
+            <textarea class="note-input" id="newContent" placeholder="Take a note..." rows="1"></textarea>
+            <div class="create-actions" id="createActions">
+                <button class="btn-text" onclick="closeCreateBox()">Close</button>
+                <button class="btn-text" style="color: var(--accent);" onclick="addNote()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Grid -->
+    <div class="notes-container" id="notesGrid"></div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <input type="text" id="editTitle" placeholder="Title" style="font-size:18px; font-weight:bold; margin-bottom:10px;">
+            <textarea id="editContent" style="min-height: 200px; line-height:1.5;" placeholder="Note content"></textarea>
+            <div style="text-align: right; margin-top:15px;">
+                <button class="btn-text" onclick="closeEditModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content" style="width:350px">
+            <h3>Collaborate</h3>
+            <p style="color: var(--secondary-text); font-size: 14px;">Enter Ignite ID (@ignite.com)</p>
+            <input type="text" id="shareInput" placeholder="friend@ignite.com" style="border-bottom: 1px solid var(--border); padding: 10px 0; margin-bottom: 20px;">
+            <div style="text-align: right;">
+                <button class="btn-text" onclick="document.getElementById('shareModal').style.display='none'">Cancel</button>
+                <button class="btn-text" style="color: var(--accent);" onclick="performShare()">Share</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. CONFIGURATION (Same as your login page)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+            authDomain: "xperts-metadata.firebaseapp.com",
+            projectId: "xperts-metadata",
+            storageBucket: "xperts-metadata.firebasestorage.app",
+            messagingSenderId: "514845910910",
+            appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+            measurementId: "G-CQ5KWGJSZB"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 2. SESSION HANDLING (Integrating with your LocalStorage logic)
+        let currentUser = null;
+        
+        function checkSession() {
+            const sessionData = localStorage.getItem('xperts_multi_session');
+            if (!sessionData) {
+                // Not logged in, redirect to login page
+                alert("Please login first.");
+                window.location.href = "index.html"; // Assuming your login file is index.html
+                return;
+            }
+            
+            const sessions = JSON.parse(sessionData);
+            if (sessions.length === 0) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Get the first active session
+            currentUser = sessions[0]; // { uid, name, igniteId }
+            
+            // Update UI
+            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('userIgniteId').innerText = currentUser.igniteId || 'No Ignite ID';
+            
+            // Load Data
+            initApp();
+        }
+
+        function logout() {
+            localStorage.removeItem('xperts_multi_session');
+            window.location.href = "index.html";
+        }
+
+        // 3. UI INTERACTIONS
+        const createBox = document.getElementById('createBox');
+        const createActions = document.getElementById('createActions');
+        const titleInput = document.getElementById('newTitle');
+        const contentInput = document.getElementById('newContent');
+
+        contentInput.addEventListener('focus', () => {
+            createBox.classList.add('active');
+            titleInput.style.display = 'block';
+            createActions.style.display = 'flex';
+            contentInput.rows = 3;
+        });
+
+        function closeCreateBox() {
+            createBox.classList.remove('active');
+            titleInput.style.display = 'none';
+            createActions.style.display = 'none';
+            contentInput.rows = 1;
+            titleInput.value = '';
+            contentInput.value = '';
+        }
+
+        // 4. FIREBASE LOGIC
+        
+        async function addNote() {
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            if (!title && !content) return;
+
+            try {
+                await db.collection('notes').add({
+                    title: title,
+                    content: content,
+                    ownerId: currentUser.uid, // From localStorage
+                    ownerIgniteId: currentUser.igniteId,
+                    sharedWith: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeCreateBox();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to save note. Check console.");
+            }
+        }
+
+        // 5. REAL-TIME DATA (OWNED & SHARED)
+        let notesMap = new Map(); // Store notes to avoid duplicates in UI
+
+        function initApp() {
+            const grid = document.getElementById('notesGrid');
+
+            // Listener 1: Notes I Own
+            db.collection('notes')
+                .where('ownerId', '==', currentUser.uid)
+                .onSnapshot(snapshot => handleSnapshot(snapshot));
+
+            // Listener 2: Notes Shared With Me
+            if(currentUser.igniteId) {
+                db.collection('notes')
+                    .where('sharedWith', 'array-contains', currentUser.igniteId)
+                    .onSnapshot(snapshot => handleSnapshot(snapshot));
+            }
+        }
+
+        function handleSnapshot(snapshot) {
+            snapshot.docChanges().forEach(change => {
+                const note = change.doc.data();
+                const id = change.doc.id;
+
+                if (change.type === "added" || change.type === "modified") {
+                    renderNote(id, note);
+                }
+                if (change.type === "removed") {
+                    const el = document.getElementById(id);
+                    if(el) el.remove();
+                }
+            });
+        }
+
+        function renderNote(id, note) {
+            const grid = document.getElementById('notesGrid');
+            let el = document.getElementById(id);
+
+            // Is Shared?
+            const isOwner = note.ownerId === currentUser.uid;
+            const sharedIcon = !isOwner ? '👥' : (note.sharedWith && note.sharedWith.length > 0 ? '➡️' : '');
+            
+            const html = `
+                ${sharedIcon ? `<span class="shared-badge" title="${isOwner ? 'Shared by you' : 'Shared by ' + note.ownerIgniteId}">${sharedIcon}</span>` : ''}
+                <h3>${note.title || ''}</h3>
+                <p>${note.content || ''}</p>
+                <div class="card-actions">
+                    <button class="icon-btn" onclick="openShareModal('${id}'); event.stopPropagation();" title="Collaborate">👤+</button>
+                    ${isOwner ? `<button class="icon-btn" onclick="deleteNote('${id}'); event.stopPropagation();" title="Delete">🗑️</button>` : ''}
+                </div>
+            `;
+
+            if (!el) {
+                el = document.createElement('div');
+                el.className = 'note-card';
+                el.id = id;
+                el.onclick = (e) => {
+                    if(!e.target.closest('button')) openEditModal(id);
+                };
+                grid.prepend(el); // Add new notes to top
+            }
+            el.innerHTML = html;
+        }
+
+        function deleteNote(id) {
+            if(confirm("Delete this note?")) {
+                db.collection('notes').doc(id).delete();
+            }
+        }
+
+        // 6. REAL-TIME EDITING (Google Docs Style)
+        let currentEditId = null;
+        let editUnsubscribe = null;
+
+        function openEditModal(id) {
+            currentEditId = id;
+            document.getElementById('editModal').style.display = 'flex';
+            
+            // Listen to this specific doc for real-time updates from others
+            if(editUnsubscribe) editUnsubscribe();
+            
+            editUnsubscribe = db.collection('notes').doc(id).onSnapshot(doc => {
+                if(!doc.exists) { closeEditModal(); return; }
+                const data = doc.data();
+                
+                // Only update fields if NOT currently typing to prevent cursor jump
+                const tInput = document.getElementById('editTitle');
+                const cInput = document.getElementById('editContent');
+                
+                if(document.activeElement !== tInput) tInput.value = data.title || '';
+                if(document.activeElement !== cInput) cInput.value = data.content || '';
+            });
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            if(editUnsubscribe) editUnsubscribe();
+            currentEditId = null;
+        }
+
+        // Auto-save logic (Debounce)
+        let saveTimeout;
+        const autoSave = () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                if(currentEditId) {
+                    db.collection('notes').doc(currentEditId).update({
+                        title: document.getElementById('editTitle').value,
+                        content: document.getElementById('editContent').value
+                    });
+                }
+            }, 500); // Wait 500ms after typing stops
+        };
+
+        document.getElementById('editTitle').addEventListener('input', autoSave);
+        document.getElementById('editContent').addEventListener('input', autoSave);
+
+
+        // 7. SHARING LOGIC
+        let shareNoteId = null;
+
+        function openShareModal(id) {
+            shareNoteId = id;
+            document.getElementById('shareInput').value = '';
+            document.getElementById('shareModal').style.display = 'flex';
+        }
+
+        async function performShare() {
+            const email = document.getElementById('shareInput').value.trim();
+            
+            if (!email.endsWith('@ignite.com')) {
+                alert("Ignite ID must end with @ignite.com");
+                return;
+            }
+
+            try {
+                await db.collection('notes').doc(shareNoteId).update({
+                    sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
+                });
+                alert("Note shared successfully!");
+                document.getElementById('shareModal').style.display = 'none';
+            } catch (e) {
+                console.error(e);
+                alert("Error sharing note. Ensure you are the owner.");
+            }
+        }
+
+        // Initialize
+        checkSession();
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('editModal')) closeEditModal();
+            if (event.target == document.getElementById('shareModal')) document.getElementById('shareModal').style.display = "none";
+        }
+
+    </script>
+</body>
+</html>
