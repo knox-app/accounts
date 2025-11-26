@@ -15,175 +15,270 @@
 
     <style>
         :root {
-            --bg: #F5F7FA;
-            --surface: #FFFFFF;
+            --bg-body: #F2F5F8;
+            --bg-card: #FFFFFF;
             --primary: #0B57D0;
-            --text: #1F1F1F;
-            --border: #E0E2E0;
+            --text-main: #1F1F1F;
+            --text-light: #5E5E5E;
+            --border: #E1E3E1;
+            --fab-shadow: 0 4px 12px rgba(11, 87, 208, 0.3);
+            --menu-bg: #2d2e30;
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
 
-        /* --- LOGIN SCREEN --- */
-        #login-screen {
-            position: fixed; inset: 0; background: #fff; z-index: 2000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px;
-        }
-        .login-box { width: 100%; max-width: 320px; text-align: center; }
-        .login-input {
-            width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px;
-            border: 1px solid #ddd; font-size: 16px; background: #fafafa; outline: none;
-        }
-        .login-btn {
-            width: 100%; padding: 15px; border-radius: 12px; background: #000; color: #fff;
-            font-weight: bold; font-size: 16px; border: none; cursor: pointer;
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        /* --- MAIN APP --- */
-        #app-screen { display: none; flex-direction: column; height: 100%; }
-
-        /* Header */
-        .header {
-            padding: 15px; background: var(--surface); display: flex; align-items: center; gap: 15px;
+        /* --- 1. TOP APP BAR --- */
+        .app-bar {
+            height: 60px;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
             border-bottom: 1px solid var(--border);
+            z-index: 10;
         }
-        .search-bar {
-            flex: 1; background: #EFF1F5; height: 40px; border-radius: 20px;
-            display: flex; align-items: center; padding: 0 15px;
-        }
-        .search-bar input { border: none; background: transparent; outline: none; flex: 1; margin-left: 10px; font-size: 16px; }
-        .avatar { width: 35px; height: 35px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
 
-        /* Notes Grid */
-        .notes-list { flex: 1; overflow-y: auto; padding: 15px; display: grid; gap: 12px; }
+        .menu-icon { font-size: 20px; color: var(--text-light); padding: 8px; margin-right: 10px; cursor: pointer; }
+
+        .search-container {
+            flex: 1;
+            background: #EFF1F4;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+        }
+        .search-container input {
+            border: none; background: transparent; outline: none; width: 100%; font-family: inherit; font-size: 16px; margin-left: 8px;
+        }
+
+        .profile-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: 700;
+            margin-left: 12px;
+            font-size: 16px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* --- 2. SIDEBAR (Drawer) --- */
+        .drawer-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 49;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .drawer {
+            position: fixed; top: 0; bottom: 0; left: 0;
+            width: 280px; background: #fff; z-index: 50;
+            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+            display: flex; flex-direction: column; padding: 20px;
+        }
+        .drawer.open { transform: translateX(0); }
+
+        .drawer-header { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 30px; display: flex; gap: 10px; align-items: center; }
+        .nav-link { padding: 14px; font-weight: 500; color: var(--text-main); display: flex; gap: 15px; align-items: center; border-radius: 12px; margin-bottom: 5px; }
+        .nav-link.active { background: #D3E3FD; color: #001d35; font-weight: 600; }
+        .user-info-bottom { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
+
+        /* --- 3. NOTES GRID --- */
+        .notes-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr; /* Single column for mobile */
+            gap: 12px;
+            padding-bottom: 80px; /* Space for FAB */
+        }
+        
         .note-card {
-            background: var(--surface); padding: 16px; border-radius: 16px;
-            border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            min-height: 100px;
+            display: flex; flex-direction: column;
+            position: relative;
             transition: 0.2s;
         }
-        .note-card:active { transform: scale(0.98); background: #eee; }
-        .n-title { font-weight: 700; font-size: 16px; margin-bottom: 5px; }
-        .n-body { font-size: 14px; color: #555; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .note-card:active { transform: scale(0.98); background: #f9f9f9; }
+        
+        .note-title { font-weight: 600; font-size: 16px; margin-bottom: 6px; }
+        .note-preview { font-size: 14px; color: var(--text-light); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+        .shared-badge { position: absolute; top: 12px; right: 12px; background: #E6F4EA; color: #137333; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
         /* FAB */
         .fab {
-            position: absolute; bottom: 25px; right: 25px;
-            width: 56px; height: 56px; background: var(--surface); color: var(--primary);
-            border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            display: flex; justify-content: center; align-items: center; font-size: 24px;
-            border: 1px solid #D3E3FD; cursor: pointer;
+            position: fixed; bottom: 20px; right: 20px;
+            width: 56px; height: 56px;
+            background: var(--bg-card); color: var(--primary);
+            border-radius: 16px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px;
+            box-shadow: var(--fab-shadow);
+            z-index: 20;
+            border: 1px solid #D3E3FD;
         }
 
-        /* --- EDITOR --- */
-        #editor-layer {
+        /* --- 4. EDITOR MODAL --- */
+        .editor-screen {
             position: fixed; inset: 0; background: #fff; z-index: 100;
-            display: none; flex-direction: column; animation: slideUp 0.25s ease;
+            display: none; flex-direction: column;
+            animation: slideUp 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .editor-nav { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
-        .editor-area { flex: 1; display: flex; flex-direction: column; padding: 20px; position: relative; }
+        .editor-top {
+            height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
         
-        #eTitle { font-size: 24px; font-weight: 800; border: none; outline: none; margin-bottom: 15px; width: 100%; font-family: inherit; }
-        #eContent { font-size: 17px; line-height: 1.6; border: none; outline: none; flex: 1; resize: none; font-family: inherit; color: #333; }
+        .editor-content { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .inp-title { font-size: 22px; font-weight: 700; border: none; outline: none; width: 100%; margin-bottom: 15px; font-family: inherit; }
+        .inp-body { font-size: 16px; line-height: 1.6; border: none; outline: none; flex: 1; resize: none; font-family: inherit; color: #333; }
 
-        /* --- FLOATING AI MENU (The Context Popup) --- */
-        #floating-ai-menu {
-            position: fixed; /* Fixed prevents scrolling issues */
-            background: #222;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 30px;
-            display: none;
+        /* Typing Indicator */
+        .typing-pill {
+            position: absolute; bottom: 80px; left: 20px;
+            background: var(--text-main); color: #fff;
+            padding: 6px 12px; border-radius: 20px; font-size: 12px;
+            opacity: 0; transform: translateY(10px); transition: 0.3s; pointer-events: none;
+        }
+        .typing-pill.active { opacity: 1; transform: translateY(0); }
+
+        /* --- 5. CONTEXT MENU (Mobile Popup) --- */
+        .context-menu {
+            position: absolute;
+            background: var(--menu-bg);
+            border-radius: 50px;
+            height: 44px;
+            display: none; /* Flex when active */
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 1000;
+            padding: 0 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 200;
             transform: translateX(-50%);
-            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
         }
-        @keyframes popIn { from { transform: translateX(-50%) scale(0.8); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
-
-        /* Little arrow pointing down */
-        #floating-ai-menu::after {
-            content: ''; position: absolute; bottom: -5px; left: 50%; margin-left: -5px;
-            border-width: 5px 5px 0; border-style: solid; border-color: #222 transparent transparent transparent;
+        /* Triangle */
+        .context-menu::after {
+            content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+            border-width: 6px 6px 0; border-style: solid; border-color: var(--menu-bg) transparent transparent transparent;
         }
 
-        .ai-btn { background: none; border: none; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .ai-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.3); }
+        .ctx-btn {
+            background: none; border: none; color: white;
+            font-size: 13px; font-weight: 600; padding: 0 12px; height: 100%;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ctx-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
 
-        /* --- BOTTOM SHEET (Results) --- */
-        #result-sheet {
+        /* --- 6. BOTTOM SHEET (Results) --- */
+        .sheet-container {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background: #fff; border-radius: 20px 20px 0 0;
-            padding: 20px; box-shadow: 0 -5px 30px rgba(0,0,0,0.2);
-            z-index: 2000; transform: translateY(110%); transition: 0.3s;
-            max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column;
+            background: #fff; border-radius: 24px 24px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+            transform: translateY(110%); transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+            z-index: 300; max-height: 60vh; display: flex; flex-direction: column;
         }
-        #result-sheet.open { transform: translateY(0); }
-        .sheet-handle { width: 40px; height: 5px; background: #ddd; border-radius: 10px; margin: 0 auto 15px auto; }
+        .sheet-container.open { transform: translateY(0); }
+
+        .sheet-handle { width: 40px; height: 5px; background: #E0E2E0; border-radius: 10px; margin: 12px auto; }
+        .sheet-content { padding: 0 24px 30px 24px; overflow-y: auto; }
+        
+        /* Utils */
+        .hidden { display: none !important; }
 
     </style>
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
-    <div id="login-screen">
-        <div class="login-box">
-            <h1 style="margin-bottom: 5px;">🔥 Ignite</h1>
-            <p style="color:gray; margin-bottom: 25px;">Workspace Mobile</p>
-            <input type="text" id="loginId" class="login-input" placeholder="Name or Ignite ID">
-            <button class="login-btn" onclick="performLogin()">Enter Workspace</button>
+    <!-- DRAWER -->
+    <div class="drawer-overlay" onclick="toggleDrawer()"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header"><i class="fa-solid fa-fire"></i> Ignite</div>
+        <div class="nav-link active"><i class="fa-regular fa-lightbulb"></i> Notes</div>
+        <div class="nav-link"><i class="fa-solid fa-users"></i> Shared</div>
+        <div class="nav-link"><i class="fa-regular fa-trash-can"></i> Trash</div>
+        
+        <div class="user-info-bottom">
+            <div style="font-weight:700;" id="dName">User</div>
+            <div style="font-size:13px; color:#666;" id="dEmail">...</div>
+            <button onclick="logout()" style="margin-top:15px; width:100%; padding:10px; border:1px solid #ccc; background:none; border-radius:10px; font-weight:600;">Sign Out</button>
         </div>
     </div>
 
-    <!-- 2. APP SCREEN -->
-    <div id="app-screen">
-        <div class="header">
-            <i class="fa-solid fa-bars" style="color:#555; font-size:20px;"></i>
-            <div class="search-bar">
-                <i class="fa-solid fa-search" style="color:#999"></i>
-                <input type="text" placeholder="Search..." onkeyup="filterNotes(this.value)">
+    <!-- MAIN SCREEN -->
+    <div class="app-bar">
+        <i class="fa-solid fa-bars menu-icon" onclick="toggleDrawer()"></i>
+        <div class="search-container">
+            <i class="fa-solid fa-search" style="color:#888"></i>
+            <input type="text" placeholder="Search" onkeyup="filterNotes(this.value)">
+        </div>
+        <div class="profile-avatar" id="topAvatar">U</div>
+    </div>
+
+    <div class="notes-container" id="notesGrid">
+        <!-- Notes here -->
+    </div>
+
+    <div class="fab" onclick="createNote()"><i class="fa-solid fa-plus"></i></div>
+
+    <!-- EDITOR -->
+    <div class="editor-screen" id="editor">
+        <div class="editor-top">
+            <button onclick="closeEditor()" style="background:none; border:none; font-size:22px; color:#444;"><i class="fa-solid fa-arrow-left"></i></button>
+            <div style="display:flex; gap:15px;">
+                <button onclick="shareNote()" style="background:none; border:none; font-size:18px; color:var(--primary);"><i class="fa-solid fa-user-plus"></i></button>
+                <button onclick="deleteNote()" style="background:none; border:none; font-size:18px; color:#D93025;"><i class="fa-regular fa-trash-can"></i></button>
             </div>
-            <div class="avatar" id="userAvatar">U</div>
         </div>
-
-        <div class="notes-list" id="notesGrid"></div>
-        <div class="fab" onclick="createNote()"><i class="fa-solid fa-plus"></i></div>
-    </div>
-
-    <!-- 3. EDITOR & FLOATING MENU -->
-    <div id="editor-layer">
-        <div class="editor-nav">
-            <button onclick="closeEditor()" style="background:none; border:none; font-size:22px;"><i class="fa-solid fa-chevron-left"></i></button>
-            <div id="save-status" style="font-size:12px; color:green; opacity:0;">Saved</div>
-            <button onclick="deleteNote()" style="background:none; border:none; color:red;"><i class="fa-regular fa-trash-can"></i></button>
-        </div>
-        <div class="editor-area">
-            <input id="eTitle" placeholder="Title">
-            <textarea id="eContent" placeholder="Start typing..."></textarea>
+        
+        <div class="editor-content">
+            <input id="eTitle" class="inp-title" placeholder="Title">
+            <textarea id="eContent" class="inp-body" placeholder="Start typing... Select text for AI."></textarea>
             
-            <!-- THE FLOATING MENU -->
-            <div id="floating-ai-menu">
-                <button class="ai-btn" onmousedown="aiAction(event, 'wiki')"><i class="fa-brands fa-wikipedia-w"></i> Wiki</button>
-                <div class="ai-divider"></div>
-                <button class="ai-btn" onmousedown="aiAction(event, 'trans')"><i class="fa-solid fa-language"></i></button>
-                <div class="ai-divider"></div>
-                <button class="ai-btn" onmousedown="aiAction(event, 'speak')"><i class="fa-solid fa-volume-high"></i></button>
+            <!-- CONTEXT MENU (Popups up on selection) -->
+            <div class="context-menu" id="ctxMenu">
+                <button class="ctx-btn" onmousedown="runAI(event, 'wiki')">Wiki</button>
+                <div class="ctx-divider"></div>
+                <button class="ctx-btn" onmousedown="runAI(event, 'trans')">Trans</button>
+                <div class="ctx-divider"></div>
+                <button class="ctx-btn" onmousedown="runAI(event, 'speak')"><i class="fa-solid fa-volume-high"></i></button>
             </div>
         </div>
+
+        <div class="typing-pill" id="typingBadge">Someone is typing...</div>
     </div>
 
-    <!-- 4. RESULT SHEET -->
-    <div id="result-sheet">
+    <!-- BOTTOM SHEET (AI Results) -->
+    <div class="sheet-container" id="sheet">
         <div class="sheet-handle" onclick="closeSheet()"></div>
-        <div id="sheet-content"></div>
-        <button onclick="closeSheet()" style="margin-top:20px; padding:12px; background:#f0f0f0; border:none; border-radius:10px; font-weight:bold;">Close</button>
+        <div class="sheet-content" id="sheetBody">
+            <!-- Results -->
+        </div>
     </div>
 
     <script>
-        // FIREBASE SETUP
+        // --- FIREBASE INIT ---
         const firebaseConfig = {
             apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
             authDomain: "xperts-metadata.firebaseapp.com",
@@ -196,206 +291,247 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // APP STATE
-        let currentUser = null;
+        // --- SESSION LOGIC (Using your existing login) ---
+        let user = null;
         let currentNoteId = null;
-        let noteUnsub = null;
+        let editorUnsub = null;
 
-        // 1. AUTH LOGIC
         function checkSession() {
-            const sess = localStorage.getItem('ignite_mobile_user');
-            if(sess) {
-                currentUser = JSON.parse(sess);
-                showApp();
-            } else {
-                document.getElementById('login-screen').style.display = 'flex';
+            const sessionData = localStorage.getItem('xperts_multi_session');
+            
+            if (!sessionData) {
+                // Not logged in -> Go to your login page
+                window.location.href = "index.html"; 
+                return;
             }
-        }
-
-        function performLogin() {
-            const val = document.getElementById('loginId').value.trim();
-            if(!val) return alert("Enter a name");
             
-            // Generate a simple user object
-            currentUser = {
-                uid: 'user_' + val.replace(/\s+/g, '_').toLowerCase(),
-                name: val,
-                email: val.includes('@') ? val : `${val}@ignite.com`
-            };
-            
-            localStorage.setItem('ignite_mobile_user', JSON.stringify(currentUser));
-            document.getElementById('login-screen').style.display = 'none';
-            showApp();
-        }
+            // Parse session
+            const sessions = JSON.parse(sessionData);
+            if (sessions.length === 0) {
+                window.location.href = "index.html";
+                return;
+            }
 
-        function showApp() {
-            document.getElementById('app-screen').style.display = 'flex';
-            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
+            user = sessions[0]; // Use first logged in user
+            updateUI();
             loadNotes();
         }
 
-        // 2. NOTES LOGIC
-        function loadNotes() {
-            db.collection('notes').where('ownerId', '==', currentUser.uid).orderBy('createdAt', 'desc')
-            .onSnapshot(snap => {
-                const grid = document.getElementById('notesGrid');
-                grid.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const el = document.createElement('div');
-                    el.className = 'note-card';
-                    el.onclick = () => openEditor(doc.id);
-                    el.innerHTML = `<div class="n-title">${d.title||'Untitled'}</div><div class="n-body">${d.content||'Empty'}</div>`;
-                    grid.appendChild(el);
-                });
-            });
+        function updateUI() {
+            document.getElementById('topAvatar').innerText = user.name.charAt(0).toUpperCase();
+            document.getElementById('dName').innerText = user.name;
+            document.getElementById('dEmail').innerText = user.igniteId || user.email;
         }
 
+        function logout() {
+            localStorage.removeItem('xperts_multi_session');
+            window.location.href = "index.html";
+        }
+
+        function toggleDrawer() {
+            document.getElementById('drawer').classList.toggle('open');
+            document.querySelector('.drawer-overlay').classList.toggle('open');
+        }
+
+        // --- NOTES LOGIC ---
         async function createNote() {
             const doc = await db.collection('notes').add({
-                title: "", content: "",
-                ownerId: currentUser.uid,
+                title:"", content:"", 
+                ownerId: user.uid,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             openEditor(doc.id);
         }
 
-        function filterNotes(term) {
-            term = term.toLowerCase();
-            document.querySelectorAll('.note-card').forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(term) ? 'block' : 'none';
+        function loadNotes() {
+            // My Notes
+            db.collection('notes').where('ownerId', '==', user.uid).orderBy('createdAt', 'desc')
+            .onSnapshot(snap => renderList(snap));
+            
+            // Shared Notes (If Ignite ID exists)
+            if(user.igniteId) {
+                db.collection('notes').where('sharedWith', 'array-contains', user.igniteId)
+                .onSnapshot(snap => renderList(snap, true));
+            }
+        }
+
+        function renderList(snap, isShared = false) {
+            const grid = document.getElementById('notesGrid');
+            // Clear only if needed, but for simplicity in real-time we might clear or diff.
+            // Simple approach: Clear on first load or simple append logic?
+            // To allow mixing streams properly without dupes, we'd use a Map.
+            // For this mobile demo, let's clear and re-render current snapshot (simple).
+            if(!isShared) grid.innerHTML = ''; 
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                // Check dupes
+                if(document.getElementById(`card-${doc.id}`)) return;
+
+                const el = document.createElement('div');
+                el.className = 'note-card';
+                el.id = `card-${doc.id}`;
+                el.onclick = () => openEditor(doc.id);
+                el.innerHTML = `
+                    ${isShared ? '<div class="shared-badge">Shared</div>' : ''}
+                    <div class="note-title">${d.title || '(Untitled)'}</div>
+                    <div class="note-preview">${d.content || 'Empty note'}</div>
+                `;
+                grid.appendChild(el);
             });
         }
 
-        // 3. EDITOR LOGIC
+        function filterNotes(term) {
+            term = term.toLowerCase();
+            document.querySelectorAll('.note-card').forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        }
+
+        // --- EDITOR LOGIC ---
         function openEditor(id) {
             currentNoteId = id;
-            document.getElementById('editor-layer').style.display = 'flex';
-            noteUnsub = db.collection('notes').doc(id).onSnapshot(doc => {
+            document.getElementById('editor').style.display = 'flex';
+            
+            editorUnsub = db.collection('notes').doc(id).onSnapshot(doc => {
                 if(!doc.exists) { closeEditor(); return; }
                 const d = doc.data();
                 if(document.activeElement.id !== 'eTitle') document.getElementById('eTitle').value = d.title;
                 if(document.activeElement.id !== 'eContent') document.getElementById('eContent').value = d.content;
+
+                // Typing Indicator
+                const badge = document.getElementById('typingBadge');
+                if(d.typing && d.typing.id !== user.uid) {
+                    badge.innerText = `${d.typing.name} is typing...`;
+                    badge.classList.add('active');
+                } else {
+                    badge.classList.remove('active');
+                }
             });
         }
 
         function closeEditor() {
-            document.getElementById('editor-layer').style.display = 'none';
-            if(noteUnsub) noteUnsub();
+            document.getElementById('editor').style.display = 'none';
+            if(editorUnsub) editorUnsub();
             currentNoteId = null;
-            document.getElementById('floating-ai-menu').style.display = 'none';
+            document.getElementById('ctxMenu').style.display = 'none';
         }
 
-        // Auto-Save
+        // Auto Save & Typing Presence
         let saveT;
-        const save = () => {
-            document.getElementById('save-status').style.opacity = 1;
+        const handleInput = () => {
+            // Set Typing
+            db.collection('notes').doc(currentNoteId).update({
+                typing: { id: user.uid, name: user.name, ts: Date.now() }
+            });
+
             clearTimeout(saveT);
             saveT = setTimeout(() => {
                 db.collection('notes').doc(currentNoteId).update({
                     title: document.getElementById('eTitle').value,
-                    content: document.getElementById('eContent').value
+                    content: document.getElementById('eContent').value,
+                    typing: null
                 });
-                setTimeout(() => document.getElementById('save-status').style.opacity = 0, 1000);
             }, 500);
         }
-        document.getElementById('eTitle').addEventListener('input', save);
-        document.getElementById('eContent').addEventListener('input', save);
+        document.getElementById('eTitle').addEventListener('input', handleInput);
+        document.getElementById('eContent').addEventListener('input', handleInput);
 
         async function deleteNote() {
-            if(confirm("Delete this note?")) {
+            if(confirm("Delete?")) {
                 await db.collection('notes').doc(currentNoteId).delete();
                 closeEditor();
             }
         }
 
-        // 4. FLOATING MENU LOGIC (The "Copy/Cut" style menu)
-        const textarea = document.getElementById('eContent');
-        const menu = document.getElementById('floating-ai-menu');
+        async function shareNote() {
+            const email = prompt("Share with Ignite ID:");
+            if(email && email.endsWith('@ignite.com')) {
+                await db.collection('notes').doc(currentNoteId).update({
+                    sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
+                });
+                alert("Shared!");
+            }
+        }
+
+
+        // --- CONTEXT MENU (SELECTION) LOGIC ---
+        const txtArea = document.getElementById('eContent');
+        const menu = document.getElementById('ctxMenu');
 
         document.addEventListener('selectionchange', () => {
             const sel = window.getSelection();
             const text = sel.toString().trim();
 
-            // Only show if text is selected inside the editor textarea
-            if(text.length > 0 && document.activeElement === textarea) {
-                // Get coordinates relative to viewport
-                // Note: Textarea selection rects are tricky on mobile. 
-                // We will position it near the touch point or simply center top if complex.
-                // Simple approach: Center horizontally, Fixed Top offset based on cursor roughly?
-                // Actually, Range.getBoundingClientRect works in most modern mobile browsers.
+            if (text.length > 0 && document.activeElement === txtArea) {
                 try {
                     const range = sel.getRangeAt(0);
                     const rect = range.getBoundingClientRect();
                     
-                    // Show menu 45px above the selection
-                    // rect.top is from top of viewport.
-                    let topPos = rect.top - 50;
-                    if (topPos < 10) topPos = rect.bottom + 10; // Flip to bottom if too close to top edge
+                    // Calculation for mobile coordinates
+                    const top = rect.top - 55; // Above text
+                    const left = rect.left + (rect.width / 2);
                     
-                    menu.style.top = `${topPos}px`;
-                    menu.style.left = `${rect.left + (rect.width / 2)}px`;
+                    menu.style.top = `${top > 10 ? top : rect.bottom + 10}px`; // Flip if too high
+                    menu.style.left = `${left}px`;
                     menu.style.display = 'flex';
-                } catch(e) {
-                    // Fallback
-                    menu.style.display = 'none';
-                }
+                } catch(e) { menu.style.display = 'none'; }
             } else {
                 menu.style.display = 'none';
             }
         });
 
-        // Hide menu on scroll
-        textarea.addEventListener('scroll', () => { menu.style.display = 'none'; });
-        textarea.addEventListener('blur', () => { setTimeout(() => menu.style.display = 'none', 200); });
+        txtArea.addEventListener('scroll', () => menu.style.display = 'none');
+        txtArea.addEventListener('blur', () => setTimeout(()=>menu.style.display='none', 200));
 
-        // 5. AI ACTIONS
-        function closeSheet() { document.getElementById('result-sheet').classList.remove('open'); }
+        // --- AI RESULTS ---
+        function closeSheet() { document.getElementById('sheet').classList.remove('open'); }
 
-        async function aiAction(e, type) {
-            e.preventDefault(); // Prevent losing selection
+        async function runAI(e, type) {
+            e.preventDefault(); // Keep selection
             const text = window.getSelection().toString().trim();
             if(!text) return;
 
-            const sheet = document.getElementById('result-sheet');
-            const content = document.getElementById('sheet-content');
+            const sheet = document.getElementById('sheet');
+            const body = document.getElementById('sheetBody');
             
             if(type === 'speak') {
-                const u = new SpeechSynthesisUtterance(text);
-                window.speechSynthesis.speak(u);
+                window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
                 return;
             }
 
             sheet.classList.add('open');
-            content.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            body.innerHTML = '<div style="text-align:center; padding:20px; color:#888;"><i class="fa-solid fa-spinner fa-spin"></i> Processing...</div>';
 
             if(type === 'wiki') {
                 try {
                     const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(text)}`);
                     const d = await r.json();
-                    content.innerHTML = `
-                        <h3 style="margin:0 0 10px 0;">${d.title}</h3>
-                        ${d.thumbnail ? `<img src="${d.thumbnail.source}" style="width:100%; height:150px; object-fit:cover; border-radius:10px; margin-bottom:10px;">` : ''}
-                        <div style="line-height:1.5">${d.extract}</div>
-                    `;
-                } catch(err) { content.innerText = "No results found."; }
+                    if(d.type === 'standard') {
+                        body.innerHTML = `
+                            <h3 style="margin:0 0 10px 0; color:var(--primary)">${d.title}</h3>
+                            ${d.thumbnail ? `<img src="${d.thumbnail.source}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : ''}
+                            <div style="line-height:1.5">${d.extract}</div>
+                        `;
+                    } else { body.innerText = "No results found."; }
+                } catch(e) { body.innerText = "Error fetching Wiki."; }
             }
 
             if(type === 'trans') {
                 try {
                     const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`);
                     const d = await r.json();
-                    content.innerHTML = `
-                        <div style="color:gray; font-size:12px;">Translated to Spanish:</div>
-                        <h2 style="margin:5px 0;">${d.responseData.translatedText}</h2>
+                    body.innerHTML = `
+                        <div style="font-size:12px; color:#888;">Spanish Translation:</div>
+                        <h2 style="margin:10px 0;">${d.responseData.translatedText}</h2>
                     `;
-                } catch(err) { content.innerText = "Translation Error"; }
+                } catch(e) { body.innerText = "Translation Error."; }
             }
         }
 
-        // Start
+        // Initialize
         checkSession();
 
     </script>
 </body>
-    </html>
+</html>
