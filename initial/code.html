@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Code - Xperts</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fff; }
+        .card { width: 90%; max-width: 400px; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 12px; }
+        .code-display { font-size: 40px; font-weight: bold; letter-spacing: 5px; color: #1d9bf0; margin: 20px 0; }
+        .btn { background: #000; color: #fff; padding: 12px 24px; border-radius: 50px; border: none; font-size: 16px; cursor: pointer; }
+        .info { color: #536471; margin-bottom: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Security Code</h2>
+    <p class="info">Use this code to verify this phone number on another account. It expires in 5 minutes.</p>
+    
+    <div id="codeArea" class="code-display">------</div>
+    
+    <button class="btn" onclick="generateCode()">Generate Code</button>
+    <br><br>
+    <a href="5.html" style="color:#000; text-decoration:none;">&larr; Back to Switcher</a>
+</div>
+
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function generateCode() {
+        // Get active user from multi session
+        const sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
+        if(sessions.length === 0) {
+            alert("No user logged in");
+            window.location.href="1.html";
+            return;
+        }
+        // Assuming last added or index 0 is active for this context
+        const uid = sessions[sessions.length - 1].uid; 
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = Date.now() + (5 * 60 * 1000); // 5 mins
+
+        document.getElementById('codeArea').innerText = "Loading...";
+
+        db.collection('users').doc(uid).update({
+            transferCode: code,
+            transferExpiry: expiry
+        }).then(() => {
+            document.getElementById('codeArea').innerText = code;
+        }).catch(err => alert("Error: " + err.message));
+    }
+</script>
+</body>
+</html>
