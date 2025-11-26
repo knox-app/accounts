@@ -3,228 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ignite Keep - Live Collaboration</title>
-    <!-- Firebase Compat SDKs -->
+    <title>Ignite Docs - Real Time</title>
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- THEMES --- */
         :root {
-            /* Dark Mode (Default) */
-            --bg-color: #202124;
-            --card-color: #2d2e30;
-            --text-color: #e8eaed;
-            --secondary-text: #9aa0a6;
+            --bg: #202124;
+            --card: #2d2e30;
+            --text: #e8eaed;
             --border: #5f6368;
-            --modal-overlay: rgba(0,0,0,0.7);
-            --icon-hover: rgba(255,255,255,0.1);
-        }
-
-        body.light-mode {
-            /* Light Mode Variables */
-            --bg-color: #ffffff;
-            --card-color: #ffffff;
-            --text-color: #202124;
-            --secondary-text: #5f6368;
-            --border: #e0e0e0;
-            --modal-overlay: rgba(229, 229, 229, 0.7);
-            --icon-hover: rgba(0,0,0,0.05);
-        }
-
-        /* Note Colors (Keep Style) */
-        .color-btn { width: 25px; height: 25px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; display: inline-block; margin: 0 3px; }
-        .color-btn:hover { border-color: var(--text-color); }
-        
-        /* Color Classes */
-        .bg-default { background-color: var(--card-color) !important; }
-        .bg-red     { background-color: #5c2b29 !important; }
-        .bg-blue    { background-color: #1e3a5f !important; }
-        .bg-green   { background-color: #0f5132 !important; }
-        .bg-yellow  { background-color: #635d19 !important; }
-        
-        /* Light Mode Colors Override */
-        body.light-mode .bg-red    { background-color: #f28b82 !important; }
-        body.light-mode .bg-blue   { background-color: #aecbfa !important; }
-        body.light-mode .bg-green  { background-color: #ccff90 !important; }
-        body.light-mode .bg-yellow { background-color: #fff475 !important; }
-
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 30px;
-            border-bottom: 1px solid var(--border);
-        }
-        .actions-right { display: flex; align-items: center; gap: 15px; }
-
-        /* Create Section */
-        .create-wrapper { display: flex; justify-content: center; margin-top: 30px; padding: 0 10px; }
-        .create-box {
-            background: var(--card-color);
-            width: 600px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            padding: 5px;
-            transition: 0.3s;
+            --modal-bg: rgba(0,0,0,0.8);
         }
         
-        input, textarea {
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            width: 100%;
-            outline: none;
-            font-family: inherit;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .title-input { font-weight: bold; font-size: 16px; display: none; }
-        .create-actions { display: none; justify-content: space-between; align-items: center; padding: 5px 10px; }
-        
-        /* Buttons */
-        .btn-text { background: none; border: none; color: var(--text-color); cursor: pointer; padding: 8px 15px; border-radius: 4px; font-weight: bold;}
-        .btn-text:hover { background: var(--icon-hover); }
-        .btn-theme { background: var(--border); border: none; padding: 8px 12px; border-radius: 20px; color: var(--text-color); cursor: pointer; }
+        body { font-family: 'Google Sans', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; }
 
-        /* Notes Grid */
-        .notes-grid {
-            padding: 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 15px;
-            align-items: start;
-        }
-        .note-card {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 15px;
-            cursor: default;
+        /* --- Header --- */
+        header { display: flex; justify-content: space-between; padding: 15px 30px; border-bottom: 1px solid var(--border); align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .logo span { color: #fbbc04; }
+
+        /* --- Grid --- */
+        .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; padding: 30px; }
+        .note-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; cursor: pointer; transition: 0.2s; white-space: pre-wrap; height: 150px; overflow: hidden; position: relative; }
+        .note-card:hover { border-color: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .note-title { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; }
+
+        /* --- Create Box --- */
+        .create-container { display: flex; justify-content: center; margin-top: 30px; }
+        .create-box { background: var(--card); width: 600px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+        input, textarea { background: transparent; border: none; color: var(--text); width: 100%; outline: none; font-family: inherit; display: block; }
+        .create-btn { float: right; margin-top: 10px; background: none; border: none; color: #fbbc04; font-weight: bold; cursor: pointer; }
+
+        /* --- MODAL (The Editor) --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card); width: 60%; height: 70%; padding: 30px; border-radius: 12px; position: relative; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid var(--border); }
+        
+        /* --- GOOGLE DOCS STYLE RIBBON --- */
+        .collab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        
+        .avatar-stack { display: flex; flex-direction: row-reverse; align-items: center; }
+        
+        /* User Bubble */
+        .user-bubble {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--card);
+            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 14px;
+            margin-left: -8px; /* Stack effect */
             position: relative;
-            transition: background-color 0.3s ease; /* Smooth color transition */
-            white-space: pre-wrap;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
-        .note-card:hover .card-footer { opacity: 1; }
-        .card-footer { display: flex; justify-content: space-between; margin-top: 15px; opacity: 0; transition: 0.2s; align-items: center;}
-
-        /* Modal */
-        .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
-            width: 100%; height: 100%; background-color: var(--modal-overlay);
-            justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background-color: var(--card-color);
-            padding: 20px;
-            border-radius: 8px;
-            width: 500px;
-            border: 1px solid var(--border);
-            position: relative;
-            transition: background-color 0.3s;
-        }
+        .user-bubble:hover { transform: translateY(-5px); z-index: 10; }
         
-        .presence-badge {
-            background: rgba(0,0,0,0.3);
-            color: var(--text-color);
-            padding: 4px 10px;
-            border-radius: 12px;
+        /* Tooltip Name on Hover */
+        .user-bubble::after {
+            content: attr(data-name);
+            position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+            background: #000; padding: 4px 8px; border-radius: 4px; font-size: 12px;
+            white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.2s;
+        }
+        .user-bubble:hover::after { opacity: 1; }
+
+        /* --- TYPING INDICATOR FLAG --- */
+        .typing-flag {
+            position: absolute;
+            top: 65px; /* Positioned below header */
+            right: 30px;
+            padding: 5px 10px;
+            border-radius: 4px;
             font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 10px;
+            font-weight: bold;
+            color: #000;
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 50;
         }
-        .pulse { width: 8px; height: 8px; background: #0f9d58; border-radius: 50%; box-shadow: 0 0 5px #0f9d58; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Tools */
-        .color-palette { display: flex; gap: 5px; }
+        /* --- Editors --- */
+        #editorTitle { font-size: 24px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid transparent; }
+        #editorContent { flex-grow: 1; font-size: 16px; line-height: 1.6; resize: none; }
+
+        /* --- TOAST NOTIFICATION (Popup) --- */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
+        .toast {
+            background: #333; color: #fff; padding: 12px 20px; border-radius: 8px;
+            border-left: 4px solid #fbbc04;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            animation: slideIn 0.5s ease forwards;
+            min-width: 200px; font-size: 14px;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Utilities */
+        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: gray; font-size: 20px; cursor: pointer; }
     </style>
 </head>
-<body class="">
+<body>
 
     <header>
-        <div style="font-size: 24px; font-weight: bold; color: var(--text-color);">🔥 Ignite Keep</div>
-        <div class="actions-right">
-            <button class="btn-theme" onclick="toggleTheme()">🌗 Theme</button>
-            <div id="userDisplay" style="font-size: 14px; color: var(--secondary-text);"></div>
-            <button class="btn-text" onclick="logout()" style="color: #ff6b6b;">Logout</button>
+        <div class="logo"><span>🔥</span> Ignite Docs</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <span id="myID" style="font-size:12px; color:gray;"></span>
+            <button onclick="logout()" style="background:none; border:1px solid gray; color:#fff; padding:5px 15px; cursor:pointer;">Logout</button>
         </div>
     </header>
 
-    <!-- Create Note -->
-    <div class="create-wrapper">
-        <div class="create-box bg-default" id="createBox">
-            <input type="text" class="title-input" id="newTitle" placeholder="Title">
+    <div class="create-container">
+        <div class="create-box">
+            <input id="newTitle" placeholder="Title">
             <textarea id="newContent" placeholder="Take a note..." rows="1"></textarea>
-            
-            <div class="create-actions" id="createActions">
-                <div class="color-palette">
-                    <div class="color-btn bg-default" onclick="setCreateColor('bg-default')"></div>
-                    <div class="color-btn bg-red" onclick="setCreateColor('bg-red')"></div>
-                    <div class="color-btn bg-blue" onclick="setCreateColor('bg-blue')"></div>
-                    <div class="color-btn bg-green" onclick="setCreateColor('bg-green')"></div>
-                    <div class="color-btn bg-yellow" onclick="setCreateColor('bg-yellow')"></div>
-                </div>
-                <button class="btn-text" onclick="closeCreateBox()">Close</button>
-                <button class="btn-text" onclick="addNote()">Add</button>
-            </div>
+            <button class="create-btn" onclick="createNote()">Create</button>
         </div>
     </div>
 
-    <!-- Notes Grid -->
-    <div class="notes-grid" id="notesGrid"></div>
+    <div class="notes-grid" id="grid"></div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content bg-default" id="editModalContent">
+    <!-- MAIN EDITOR MODAL -->
+    <div class="modal" id="editorModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeEditor()">✕</button>
             
-            <!-- Live Presence Indicator -->
-            <div class="presence-badge">
-                <div class="pulse"></div> 
-                <span id="presenceCount">1 Person here</span>
+            <!-- HEADER RIBBON -->
+            <div class="collab-header">
+                <div style="font-size:14px; color:gray;" id="statusText">Saved</div>
+                <!-- The Avatar Stack -->
+                <div class="avatar-stack" id="avatarStack"></div>
             </div>
 
-            <input type="text" id="editTitle" placeholder="Title" style="font-size:18px; font-weight:bold; margin-bottom:10px;">
-            <textarea id="editContent" style="min-height: 200px; line-height:1.5; resize: none;" placeholder="Note content"></textarea>
-            
-            <div style="display:flex; justify-content: space-between; margin-top:15px; align-items:center;">
-                <div class="color-palette">
-                    <!-- Real-time Color Switchers -->
-                    <div class="color-btn bg-default" onclick="updateNoteColor('bg-default')"></div>
-                    <div class="color-btn bg-red" onclick="updateNoteColor('bg-red')"></div>
-                    <div class="color-btn bg-blue" onclick="updateNoteColor('bg-blue')"></div>
-                    <div class="color-btn bg-green" onclick="updateNoteColor('bg-green')"></div>
-                    <div class="color-btn bg-yellow" onclick="updateNoteColor('bg-yellow')"></div>
-                </div>
-                <button class="btn-text" onclick="closeEditModal()">Done</button>
-            </div>
+            <!-- Typing Flag (The popup name tag) -->
+            <div id="typingFlag" class="typing-flag">User is typing...</div>
+
+            <input id="editorTitle" placeholder="Title">
+            <textarea id="editorContent" placeholder="Start writing..."></textarea>
         </div>
     </div>
 
-    <!-- Share Modal -->
-    <div id="shareModal" class="modal">
-        <div class="modal-content" style="width:300px">
-            <h3>Collaborate</h3>
-            <p style="font-size:14px; color:gray">Enter Ignite ID to share (must end @ignite.com)</p>
-            <input type="text" id="shareInput" placeholder="user@ignite.com" style="border-bottom:1px solid gray; margin-bottom:15px;">
-            <div style="text-align: right;">
-                <button class="btn-text" onclick="document.getElementById('shareModal').style.display='none'">Cancel</button>
-                <button class="btn-text" onclick="performShare()">Share</button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <script>
-        /* --- 1. FIREBASE CONFIG --- */
+        // --- FIREBASE SETUP ---
         const firebaseConfig = {
             apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
             authDomain: "xperts-metadata.firebaseapp.com",
@@ -237,250 +162,203 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        /* --- 2. SESSION & THEME --- */
-        let currentUser = null;
-        let selectedCreateColor = 'bg-default';
+        // --- SESSION ---
+        let user = null;
+        let myColor = '#' + Math.floor(Math.random()*16777215).toString(16); // Random Hex Color for Me
 
-        function checkSession() {
-            const sessionData = localStorage.getItem('xperts_multi_session');
-            if (!sessionData) { window.location.href = "index.html"; return; }
-            currentUser = JSON.parse(sessionData)[0];
-            document.getElementById('userDisplay').innerText = currentUser.igniteId || currentUser.name;
+        function init() {
+            const data = localStorage.getItem('xperts_multi_session');
+            if(!data) { window.location.href="index.html"; return; }
+            user = JSON.parse(data)[0];
+            document.getElementById('myID').innerText = user.igniteId || user.name;
             loadNotes();
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-        }
+        function logout() { localStorage.removeItem('xperts_multi_session'); window.location.href="index.html"; }
 
-        function logout() {
-            localStorage.removeItem('xperts_multi_session');
-            window.location.href = "index.html";
-        }
-
-        /* --- 3. CREATE NOTE LOGIC --- */
-        const createBox = document.getElementById('createBox');
-        const titleInput = document.getElementById('newTitle');
-        const contentInput = document.getElementById('newContent');
-        const createActions = document.getElementById('createActions');
-
-        contentInput.addEventListener('focus', () => {
-            titleInput.style.display = 'block';
-            createActions.style.display = 'flex';
-            contentInput.rows = 3;
-        });
-
-        function setCreateColor(colorClass) {
-            selectedCreateColor = colorClass;
-            // Remove old color classes and add new one
-            createBox.className = `create-box ${colorClass}`;
-        }
-
-        function closeCreateBox() {
-            titleInput.style.display = 'none';
-            createActions.style.display = 'none';
-            contentInput.rows = 1;
-            titleInput.value = ''; contentInput.value = '';
-            setCreateColor('bg-default'); // Reset
-        }
-
-        async function addNote() {
-            const title = titleInput.value;
-            const content = contentInput.value;
+        // --- CREATE NOTE ---
+        async function createNote() {
+            const title = document.getElementById('newTitle').value;
+            const content = document.getElementById('newContent').value;
             if(!title && !content) return;
 
             await db.collection('notes').add({
-                title, content,
-                color: selectedCreateColor,
-                ownerId: currentUser.uid,
-                ownerIgniteId: currentUser.igniteId,
-                sharedWith: [],
-                activeViewers: [], // For presence
+                title, content, 
+                ownerId: user.uid,
+                viewers: [], // Array of objects { name, color, id }
+                typing: null, // { name, color } of person typing
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            closeCreateBox();
+            document.getElementById('newTitle').value = '';
+            document.getElementById('newContent').value = '';
         }
 
-        /* --- 4. READ & RENDER NOTES --- */
+        // --- GRID DISPLAY ---
         function loadNotes() {
-            // Own Notes
-            db.collection('notes').where('ownerId', '==', currentUser.uid)
-              .onSnapshot(snap => handleSnapshot(snap));
-            
-            // Shared Notes
-            if(currentUser.igniteId) {
-                db.collection('notes').where('sharedWith', 'array-contains', currentUser.igniteId)
-                  .onSnapshot(snap => handleSnapshot(snap));
-            }
-        }
-
-        function handleSnapshot(snapshot) {
-            snapshot.docChanges().forEach(change => {
-                const doc = change.doc;
-                if(change.type === 'removed') {
-                    const el = document.getElementById(doc.id);
-                    if(el) el.remove();
-                } else {
-                    renderCard(doc.id, doc.data());
-                }
+            db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snap => {
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'note-card';
+                    div.onclick = () => openEditor(doc.id);
+                    div.innerHTML = `<div class="note-title">${d.title||'(No Title)'}</div><div>${d.content||''}</div>`;
+                    grid.appendChild(div);
+                });
             });
         }
 
-        function renderCard(id, data) {
-            const grid = document.getElementById('notesGrid');
-            let el = document.getElementById(id);
+        // --- REAL-TIME EDITOR LOGIC ---
+        let currentNoteId = null;
+        let unsubscribe = null;
+        let previousViewers = [];
+
+        async function openEditor(id) {
+            currentNoteId = id;
+            document.getElementById('editorModal').style.display = 'flex';
             
-            const isOwner = data.ownerId === currentUser.uid;
-            // Determine Color Class
-            const colorClass = data.color || 'bg-default';
-
-            const html = `
-                <div style="font-weight:bold; font-size:1.1em; margin-bottom:5px;">${data.title || ''}</div>
-                <div style="font-size:0.95em; line-height:1.4;">${data.content || ''}</div>
-                <div class="card-footer">
-                    <span style="font-size:0.8em; opacity:0.7">${isOwner ? 'Me' : 'Shared'}</span>
-                    <div>
-                        <button class="btn-text" onclick="openShareModal('${id}'); event.stopPropagation();">👤+</button>
-                        ${isOwner ? `<button class="btn-text" onclick="deleteNote('${id}'); event.stopPropagation();">🗑️</button>` : ''}
-                    </div>
-                </div>
-            `;
-
-            if(!el) {
-                el = document.createElement('div');
-                el.id = id;
-                el.onclick = (e) => { 
-                    if(!e.target.closest('button')) openEditModal(id); 
-                };
-                grid.prepend(el);
-            }
-            
-            // UPDATE: This happens in real-time. If User A changes color, User B sees class change.
-            el.className = `note-card ${colorClass}`;
-            el.innerHTML = html;
-        }
-
-        function deleteNote(id) {
-            if(confirm('Delete?')) db.collection('notes').doc(id).delete();
-        }
-
-        /* --- 5. EDITING, SYNC & PRESENCE --- */
-        let currentEditId = null;
-        let editUnsub = null;
-
-        function openEditModal(id) {
-            currentEditId = id;
-            document.getElementById('editModal').style.display = 'flex';
-            
-            // 1. ADD SELF TO PRESENCE LIST
-            db.collection('notes').doc(id).update({
-                activeViewers: firebase.firestore.FieldValue.arrayUnion(currentUser.name)
+            // 1. Add Me to Viewers List (With Color)
+            const myViewerData = { name: user.name, id: user.uid, color: myColor };
+            await db.collection('notes').doc(id).update({
+                viewers: firebase.firestore.FieldValue.arrayUnion(myViewerData)
             });
 
-            // 2. LISTEN TO DOCUMENT (Sync text, color, and presence)
-            if(editUnsub) editUnsub();
-            editUnsub = db.collection('notes').doc(id).onSnapshot(doc => {
-                if(!doc.exists) { closeEditModal(); return; }
+            // 2. Listen for Updates
+            unsubscribe = db.collection('notes').doc(id).onSnapshot(doc => {
+                if(!doc.exists) { closeEditor(); return; }
                 const data = doc.data();
 
-                // Sync Text (Only if not focused to avoid cursor jump)
-                const tIn = document.getElementById('editTitle');
-                const cIn = document.getElementById('editContent');
-                if(document.activeElement !== tIn) tIn.value = data.title;
-                if(document.activeElement !== cIn) cIn.value = data.content;
+                // SYNC TEXT (Only if not focused or content is vastly different)
+                const tEl = document.getElementById('editorTitle');
+                const cEl = document.getElementById('editorContent');
+                if(document.activeElement !== tEl) tEl.value = data.title;
+                if(document.activeElement !== cEl) cEl.value = data.content;
 
-                // Sync Color in Modal (Real-time!)
-                document.getElementById('editModalContent').className = `modal-content ${data.color || 'bg-default'}`;
+                // SYNC RIBBON (Avatars)
+                updateRibbon(data.viewers || []);
 
-                // Sync Presence Count
-                const viewers = data.activeViewers || [];
-                const count = viewers.length;
-                let text = count + " People Viewing";
-                if(count === 1) text = "You are editing";
-                else if(count > 1) {
-                    // Filter out my name for the UI list if needed, or just show count
-                    const others = viewers.filter(n => n !== currentUser.name);
-                    if(others.length > 0) text = `You + ${others.join(', ')}`;
+                // SYNC TYPING FLAG
+                showTypingFlag(data.typing);
+            });
+        }
+
+        // --- RIBBON & TOAST LOGIC ---
+        function updateRibbon(viewers) {
+            const stack = document.getElementById('avatarStack');
+            stack.innerHTML = ''; // Clear
+
+            // Detect New Joiners for Toast
+            viewers.forEach(v => {
+                if(v.id !== user.uid) { // Don't toast myself
+                    const wasHere = previousViewers.find(p => p.id === v.id);
+                    if(!wasHere) showToast(`${v.name} joined the note`);
                 }
-                document.getElementById('presenceCount').innerText = text;
             });
+            previousViewers = viewers;
 
-            // Handle browser close/refresh cleanup
-            window.addEventListener('beforeunload', handleUnload);
+            // Render Bubbles
+            viewers.forEach(v => {
+                const b = document.createElement('div');
+                b.className = 'user-bubble';
+                b.style.backgroundColor = v.color;
+                b.innerText = v.name.charAt(0).toUpperCase();
+                b.setAttribute('data-name', v.name); // For Tooltip
+                stack.appendChild(b);
+            });
         }
 
-        function closeEditModal() {
-            if(!currentEditId) return;
-
-            // REMOVE SELF FROM PRESENCE
-            db.collection('notes').doc(currentEditId).update({
-                activeViewers: firebase.firestore.FieldValue.arrayRemove(currentUser.name)
-            });
-
-            document.getElementById('editModal').style.display = 'none';
-            if(editUnsub) editUnsub();
-            window.removeEventListener('beforeunload', handleUnload);
-            currentEditId = null;
+        function showToast(msg) {
+            const box = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.innerText = msg;
+            box.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
         }
 
-        const handleUnload = () => {
-            if(currentEditId) {
-                // Best effort to remove name on tab close
-                db.collection('notes').doc(currentEditId).update({
-                    activeViewers: firebase.firestore.FieldValue.arrayRemove(currentUser.name)
-                });
+        // --- TYPING INDICATOR LOGIC ---
+        let typingTimeout;
+        const typingFlagEl = document.getElementById('typingFlag');
+
+        function showTypingFlag(typingData) {
+            if (typingData && typingData.id !== user.uid) {
+                // Someone else is typing
+                typingFlagEl.style.display = 'block';
+                typingFlagEl.style.backgroundColor = typingData.color;
+                typingFlagEl.innerText = `${typingData.name} is typing...`;
+                
+                // If the data is old (stuck), hide it locally after 2 secs
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    typingFlagEl.style.display = 'none';
+                }, 2000);
+            } else {
+                typingFlagEl.style.display = 'none';
             }
+        }
+
+        // --- INPUT HANDLING (Zero Latency Attempt) ---
+        const tInput = document.getElementById('editorTitle');
+        const cInput = document.getElementById('editorContent');
+
+        // We update the DB "typing" field instantly, but content slightly delayed
+        let dbSaveTimer;
+
+        const handleInput = () => {
+            document.getElementById('statusText').innerText = "Saving...";
+            
+            // 1. INSTANT: Tell everyone I am typing
+            db.collection('notes').doc(currentNoteId).update({
+                typing: { name: user.name, id: user.uid, color: myColor, ts: Date.now() }
+            });
+
+            // 2. DEBOUNCED: Save the actual text (500ms delay to save writes, but feels fast)
+            clearTimeout(dbSaveTimer);
+            dbSaveTimer = setTimeout(() => {
+                db.collection('notes').doc(currentNoteId).update({
+                    title: tInput.value,
+                    content: cInput.value,
+                    typing: null // Remove typing flag after save
+                }).then(() => {
+                    document.getElementById('statusText').innerText = "Saved";
+                });
+            }, 500); 
         };
 
-        // Real-time Update Logic (Debounced)
-        let saveTimer;
-        function autoSave() {
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(() => {
-                if(currentEditId) {
-                    db.collection('notes').doc(currentEditId).update({
-                        title: document.getElementById('editTitle').value,
-                        content: document.getElementById('editContent').value
-                    });
-                }
-            }, 500);
-        }
+        tInput.addEventListener('input', handleInput);
+        cInput.addEventListener('input', handleInput);
 
-        // Color Update Logic (Immediate)
-        function updateNoteColor(newColor) {
-            if(currentEditId) {
-                db.collection('notes').doc(currentEditId).update({ color: newColor });
+
+        // --- CLOSE & CLEANUP ---
+        async function closeEditor() {
+            if(!currentNoteId) return;
+            document.getElementById('editorModal').style.display = 'none';
+            if(unsubscribe) unsubscribe();
+
+            // Remove Me from Viewers
+            // Note: Firestore remove object from array is tricky if exact match required.
+            // Simplified: We pull the array, filter me out, and write back.
+            const docRef = db.collection('notes').doc(currentNoteId);
+            const snap = await docRef.get();
+            if(snap.exists) {
+                const viewers = snap.data().viewers || [];
+                const updated = viewers.filter(v => v.id !== user.uid);
+                await docRef.update({ viewers: updated });
             }
+
+            currentNoteId = null;
         }
 
-        document.getElementById('editTitle').addEventListener('input', autoSave);
-        document.getElementById('editContent').addEventListener('input', autoSave);
+        // Handle Browser Tab Close
+        window.addEventListener('beforeunload', () => {
+             if(currentNoteId) {
+                 // Best effort cleanup (navigator.sendBeacon is better but Firestore REST API is complex here)
+                 // Just relying on session logic usually
+             }
+        });
 
-
-        /* --- 6. SHARING --- */
-        let shareId = null;
-        function openShareModal(id) {
-            shareId = id;
-            document.getElementById('shareModal').style.display = 'flex';
-        }
-
-        async function performShare() {
-            const email = document.getElementById('shareInput').value;
-            if(!email.endsWith('@ignite.com')) { alert('Must be @ignite.com'); return; }
-            await db.collection('notes').doc(shareId).update({
-                sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
-            });
-            document.getElementById('shareModal').style.display = 'none';
-            alert('Shared!');
-        }
-
-        // Init
-        checkSession();
-
-        // Close modal on click outside
-        window.onclick = (e) => {
-            if(e.target === document.getElementById('editModal')) closeEditModal();
-        }
+        init();
     </script>
 </body>
 </html>
