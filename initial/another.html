@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Account - Xperts</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        /* Same CSS as 1.html */
+        body { font-family: sans-serif; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; padding: 30px; }
+        .logo { font-size: 40px; text-align: center; margin-bottom: 30px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 15px; border: 1px solid #cfd9de; border-radius: 5px; margin-bottom: 20px; font-size: 16px; }
+        .btn-black { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo">𝕏</div>
+    <!-- Step 1 -->
+    <div id="s1">
+        <h1>Add another account</h1>
+        <div class="input-group"><input type="text" id="idInput" placeholder="Phone, email, or ignite ID"></div>
+        <button class="btn-black" onclick="findUser()">Next</button>
+    </div>
+    <!-- Step 2 -->
+    <div id="s2" class="hidden">
+        <h2 id="welcomeId"></h2>
+        <div class="input-group"><input type="password" id="passInput" placeholder="Password"></div>
+        <button class="btn-black" onclick="doLogin()">Log in</button>
+    </div>
+</div>
+
+<script>
+    // Same Firebase Setup
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let foundUser = null;
+
+    async function findUser() {
+        const val = document.getElementById('idInput').value;
+        if(!val) return;
+        
+        let q;
+        if(val.includes('@') && !val.includes('ignite')) q = db.collection('users').where('email','==',val);
+        else if(val.includes('ignite')) q = db.collection('users').where('igniteId','==', (val.includes('@')?val:val+'@ignite.com'));
+        else q = db.collection('users').where('mobile','==',val);
+
+        const snap = await q.get();
+        if(snap.empty) { alert("User not found"); return; }
+        
+        foundUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        
+        // CHECK IF ALREADY LOGGED IN
+        const sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
+        const exists = sessions.find(s => s.uid === foundUser.id);
+        if(exists) {
+            alert("This account is already on this device.");
+            window.location.href = "5.html"; // Redirect to switcher
+            return;
+        }
+
+        document.getElementById('s1').classList.add('hidden');
+        document.getElementById('s2').classList.remove('hidden');
+        document.getElementById('welcomeId').innerText = "Hi, " + foundUser.firstName;
+    }
+
+    function doLogin() {
+        const pass = document.getElementById('passInput').value;
+        if(pass === foundUser.password) {
+            let sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
+            sessions.push({ uid: foundUser.id, name: foundUser.firstName, igniteId: foundUser.igniteId });
+            localStorage.setItem('xperts_multi_session', JSON.stringify(sessions));
+            window.location.href = "5.html"; // Go to switcher
+        } else {
+            alert("Wrong password");
+        }
+    }
+</script>
+</body>
+</html>
