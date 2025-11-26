@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +7,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        /* Same CSS as 1.html */
         body { font-family: sans-serif; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; padding: 30px; }
         .logo { font-size: 40px; text-align: center; margin-bottom: 30px; font-weight: bold; }
@@ -36,16 +34,16 @@
 </div>
 
 <script>
-    // Same Firebase Setup
     const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let foundUser = null;
+    let foundUsers = [];
 
     async function findUser() {
-        const val = document.getElementById('idInput').value;
+        const val = document.getElementById('idInput').value.trim();
         if(!val) return;
+        foundUsers = [];
         
         let q;
         if(val.includes('@') && !val.includes('ignite')) q = db.collection('users').where('email','==',val);
@@ -55,29 +53,56 @@
         const snap = await q.get();
         if(snap.empty) { alert("User not found"); return; }
         
-        foundUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        snap.forEach(doc => {
+            foundUsers.push({ id: doc.id, ...doc.data() });
+        });
         
-        // CHECK IF ALREADY LOGGED IN
-        const sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
-        const exists = sessions.find(s => s.uid === foundUser.id);
-        if(exists) {
-            alert("This account is already on this device.");
-            window.location.href = "5.html"; // Redirect to switcher
+        // Check if ALL found users are already logged in
+        let sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
+        
+        // Filter out users who are already logged in
+        const newUsers = foundUsers.filter(u => !sessions.some(s => s.uid === u.id));
+
+        if(newUsers.length === 0) {
+            alert("All accounts associated with this ID are already logged in.");
+            window.location.href = "5.html";
             return;
         }
 
+        // We still allow login if at least one account is new to this device
         document.getElementById('s1').classList.add('hidden');
         document.getElementById('s2').classList.remove('hidden');
-        document.getElementById('welcomeId').innerText = "Hi, " + foundUser.firstName;
+        
+        if(foundUsers.length > 1) {
+             document.getElementById('welcomeId').innerText = `Found ${foundUsers.length} linked accounts`;
+        } else {
+             document.getElementById('welcomeId').innerText = "Hi, " + foundUsers[0].firstName;
+        }
     }
 
     function doLogin() {
         const pass = document.getElementById('passInput').value;
-        if(pass === foundUser.password) {
+        
+        // Check if password matches ANY of the accounts retrieved (even ones already logged in)
+        // This confirms ownership of the Mobile/Identifier
+        const match = foundUsers.find(u => u.password === pass);
+
+        if(match) {
             let sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
-            sessions.push({ uid: foundUser.id, name: foundUser.firstName, igniteId: foundUser.igniteId });
+            
+            // Add only users not currently in session
+            let addedCount = 0;
+            foundUsers.forEach(user => {
+                const exists = sessions.find(s => s.uid === user.id);
+                if(!exists) {
+                    sessions.push({ uid: user.id, name: user.firstName, igniteId: user.igniteId });
+                    addedCount++;
+                }
+            });
+
             localStorage.setItem('xperts_multi_session', JSON.stringify(sessions));
-            window.location.href = "5.html"; // Go to switcher
+            alert(`Successfully added ${addedCount} account(s).`);
+            window.location.href = "5.html"; 
         } else {
             alert("Wrong password");
         }
