@@ -3,73 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log in to X</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Sign in to X</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fff; color: #0f1419; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
-        .header { display: flex; justify-content: center; margin-bottom: 30px; }
-        .logo { font-size: 30px; color: #0f1419; }
-        h1 { font-size: 31px; font-weight: 700; margin-bottom: 30px; color: #0f1419; }
-        .input-group { margin-bottom: 20px; position: relative; }
-        .input-group label { display: block; font-size: 13px; color: #536471; margin-bottom: 4px; }
-        .input-box { width: 100%; padding: 16px 12px; font-size: 17px; border: 1px solid #cfd9de; border-radius: 4px; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
-        .input-box:focus { border-color: #1d9bf0; }
-        .btn { width: 100%; background-color: #0f1419; color: #fff; border: none; padding: 15px; border-radius: 25px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; }
-        .btn:disabled { opacity: 0.5; cursor: default; }
-        .btn-outline { background-color: transparent; color: #0f1419; border: 1px solid #cfd9de; margin-top: 10px; }
-        .action-link { margin-top: 20px; font-size: 14px; color: #1d9bf0; cursor: pointer; text-decoration: none; display: inline-block; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1d9bf0; color: white; padding: 12px 24px; border-radius: 4px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; height: 100vh; background: #fff; color: #0f1419; }
+        .container { width: 100%; max-width: 600px; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .logo { margin-bottom: 20px; }
+        h1 { font-size: 31px; font-weight: 700; margin-bottom: 30px; align-self: flex-start; }
+        .input-group { width: 100%; margin-bottom: 20px; position: relative; }
+        input { width: 100%; padding: 16px 10px; font-size: 17px; border: 1px solid #cfd9de; border-radius: 4px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input:focus { border-color: #1d9bf0; ring: 1px #1d9bf0; }
+        .btn { width: 100%; padding: 12px; border-radius: 25px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; margin-bottom: 15px; }
+        .btn-black { background-color: #0f1419; color: white; }
+        .btn-white { background-color: white; border: 1px solid #cfd9de; color: #0f1419; }
+        .btn:disabled { opacity: 0.5; }
+        .action-link { margin-top: 10px; color: #1d9bf0; text-decoration: none; font-size: 14px; cursor: pointer; border: 1px solid #cfd9de; padding: 5px 15px; border-radius: 20px; display: inline-block; }
         .hidden { display: none; }
-        .pass-toggle { position: absolute; right: 15px; top: 38px; cursor: pointer; color: #536471; }
+        .error { color: red; font-size: 13px; margin-top: 5px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-
 <div class="container">
-    <div class="header"><i class="fa-brands fa-x-twitter logo"></i></div>
-    <h1 id="page-title">Sign in to X</h1>
-
-    <!-- Step 1: Identify -->
-    <div id="step-identify">
-        <div class="input-group">
-            <input type="text" id="identifier" class="input-box" placeholder="Phone, email, or username">
-        </div>
-        <button class="btn" onclick="handleNext()">Next</button>
-        <button class="btn btn-outline" onclick="window.location.href='4.html'">Forgot email?</button>
-        <div style="text-align: center; margin-top: 20px;">
-            <p style="font-size: 14px; color: #536471;">Don't have an account? <a href="2.html" style="color: #1d9bf0; text-decoration: none;">Sign up</a></p>
-        </div>
+    <div class="logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="30" height="30"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
     </div>
 
-    <!-- Step 2: Confirm Email (If logged in via Mobile) -->
-    <div id="step-confirm-email" class="hidden">
-        <p style="color: #536471; margin-bottom: 20px;">Please verify your email address to continue.</p>
+    <!-- Step 1: Identifier -->
+    <div id="step-1" style="width: 100%; max-width: 350px;">
+        <h1>Sign in to X</h1>
         <div class="input-group">
-            <input type="email" id="confirm-email-input" class="input-box" placeholder="Enter your email address">
+            <input type="text" id="identifier" placeholder="Phone, email, or username">
+            <div id="error-1" class="error"></div>
         </div>
-        <button class="btn" onclick="verifyLinkedEmail()">Next</button>
-        <a href="#" class="action-link" onclick="goToForgotEmail()">Forgot email?</a>
+        <button class="btn btn-black" onclick="handleIdentifier()">Next</button>
+        <button class="btn btn-white" onclick="location.href='4.html'">Forgot email?</button>
+        <p style="font-size:14px; color: #536471;">Don't have an account? <a href="2.html" style="color:#1d9bf0; text-decoration:none;">Sign up</a></p>
     </div>
 
-    <!-- Step 3: Password -->
-    <div id="step-password" class="hidden">
+    <!-- Step 1.5: Verify Email if Phone used -->
+    <div id="step-verify-email" class="hidden" style="width: 100%; max-width: 350px;">
+        <h1>Confirm your email</h1>
+        <p style="color:#536471; font-size: 14px;">Please enter the email associated with this phone number.</p>
         <div class="input-group">
-            <input type="text" id="read-only-email" class="input-box" style="background:#f7f9f9; color:#536471" disabled>
+            <input type="email" id="confirm-email" placeholder="Email address">
+            <div id="error-verify" class="error"></div>
         </div>
+        <button class="btn btn-black" onclick="verifyEmailAssociation()">Next</button>
+        <button class="btn btn-white" onclick="location.href='4.html'">Forgot email?</button>
+    </div>
+
+    <!-- Step 2: Password -->
+    <div id="step-2" class="hidden" style="width: 100%; max-width: 350px;">
+        <h1>Enter your password</h1>
         <div class="input-group">
-            <input type="password" id="password" class="input-box" placeholder="Password">
-            <i class="fa-regular fa-eye-slash pass-toggle" onclick="togglePass()"></i>
+            <input type="text" id="display-email" disabled style="background:#f7f9f9; border:none; color:#536471; margin-bottom:10px;">
+            <input type="password" id="password" placeholder="Password">
+            <div id="error-2" class="error"></div>
         </div>
-        <button class="btn" onclick="handleLogin()">Log in</button>
-        <a href="#" class="action-link" onclick="goToForgotPassword()">Forgot password?</a>
+        <button class="btn btn-black" onclick="handleLogin()">Log in</button>
+        <button class="btn btn-white" onclick="forgotPassword()">Forgot password?</button>
     </div>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 
 <script>
     const firebaseConfig = {
@@ -85,142 +82,137 @@
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const emailParam = urlParams.get('email');
-    const typeParam = urlParams.get('type');
-    
-    // Check local session
-    const currentUser = localStorage.getItem('x_current_user');
-    if (currentUser && typeParam !== 'another-login') {
-        // If already logged in and not asking to add account
-        window.location.href = "https://abc.xyz";
-    }
+    let currentUserEmail = "";
+    let currentUserMobile = "";
 
-    let globalUserData = null;
-
-    // Initialization
-    if (emailParam) {
-        // Case 4: URL has email
-        document.getElementById('step-identify').classList.add('hidden');
-        document.getElementById('step-password').classList.remove('hidden');
-        document.getElementById('read-only-email').value = emailParam;
+    window.onload = function() {
+        const type = urlParams.get('type');
+        const emailParam = urlParams.get('email');
         
-        // Fetch user data in background to ensure it exists
-        db.collection('users').where('email', '==', emailParam).get().then(snap => {
-            if(!snap.empty) globalUserData = snap.docs[0].data();
-        });
-    }
+        // Auto Login Check
+        const sessions = JSON.parse(localStorage.getItem('x_users_sessions') || '[]');
+        if (sessions.length > 0 && type !== 'another-login' && !emailParam) {
+            window.location.href = "https://abc.xyz";
+            return;
+        }
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg;
-        t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
+        // Case 4: Email in URL
+        if (emailParam) {
+            currentUserEmail = emailParam;
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('display-email').value = emailParam;
+            
+            // Check if logged in on device
+            const isLogged = sessions.find(s => s.email === emailParam);
+            if(isLogged) {
+                document.getElementById('error-2').innerText = "Email Already Logged in This Device";
+                document.getElementById('error-2').style.display = "block";
+            }
+        }
+    };
 
-    async function handleNext() {
+    async function handleIdentifier() {
         const input = document.getElementById('identifier').value.trim();
-        if(!input) return showToast("Please enter phone, email or username");
+        const errorDiv = document.getElementById('error-1');
+        errorDiv.style.display = 'none';
 
-        // Check if input is email or phone
+        if (!input) return;
+
+        // Check if input is email or phone (simple check)
         const isEmail = input.includes('@');
         
-        if (isEmail) {
-            // Case: Login via Email
-            const snap = await db.collection('users').where('email', '==', input).get();
-            if (snap.empty) return showToast("Could not find your account");
-            
-            // Check if this email is already logged in on this device
-            const loggedInUsers = JSON.parse(localStorage.getItem('x_users_list') || '[]');
-            if(loggedInUsers.some(u => u.email === input)) {
-                return showToast("Email Already Logged in This Device");
+        try {
+            let querySnapshot;
+            if (isEmail) {
+                querySnapshot = await db.collection('users').where('email', '==', input).get();
+            } else {
+                querySnapshot = await db.collection('users').where('mobile', '==', input).get();
             }
 
-            globalUserData = snap.docs[0].data();
-            document.getElementById('step-identify').classList.add('hidden');
-            document.getElementById('step-password').classList.remove('hidden');
-            document.getElementById('read-only-email').value = input;
-        } else {
-            // Case 1: Login via Mobile
-            const snap = await db.collection('users').where('mobile', '==', input).get();
-            if (snap.empty) return showToast("Could not find account with this number");
+            if (querySnapshot.empty) {
+                errorDiv.innerText = "Sorry, we could not find your account.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const userData = querySnapshot.docs[0].data();
             
-            globalUserData = snap.docs[0].data();
-            // Prompt says: "If Mobile Number is Correct then ask For email id"
-            document.getElementById('step-identify').classList.add('hidden');
-            document.getElementById('step-confirm-email').classList.remove('hidden');
+            if (isEmail) {
+                // Case 1: Email Correct -> Password
+                currentUserEmail = userData.email;
+                showPasswordStep();
+            } else {
+                // Case 1: Phone Correct -> Ask Email
+                currentUserMobile = userData.mobile;
+                document.getElementById('step-1').classList.add('hidden');
+                document.getElementById('step-verify-email').classList.remove('hidden');
+            }
+        } catch (e) {
+            console.error(e);
+            errorDiv.innerText = "An error occurred.";
+            errorDiv.style.display = 'block';
         }
     }
 
-    function verifyLinkedEmail() {
-        const enteredEmail = document.getElementById('confirm-email-input').value.trim();
-        if (enteredEmail === globalUserData.email) {
-            document.getElementById('step-confirm-email').classList.add('hidden');
-            document.getElementById('step-password').classList.remove('hidden');
-            document.getElementById('read-only-email').value = enteredEmail;
+    async function verifyEmailAssociation() {
+        const inputEmail = document.getElementById('confirm-email').value.trim();
+        const errorDiv = document.getElementById('error-verify');
+        
+        const querySnapshot = await db.collection('users')
+            .where('mobile', '==', currentUserMobile)
+            .where('email', '==', inputEmail)
+            .get();
+
+        if (!querySnapshot.empty) {
+            currentUserEmail = inputEmail;
+            showPasswordStep();
         } else {
-            showToast("Incorrect email address.");
+            errorDiv.innerText = "Email does not match our records.";
+            errorDiv.style.display = 'block';
         }
+    }
+
+    function showPasswordStep() {
+        document.getElementById('step-1').classList.add('hidden');
+        document.getElementById('step-verify-email').classList.add('hidden');
+        document.getElementById('step-2').classList.remove('hidden');
+        document.getElementById('display-email').value = currentUserEmail;
     }
 
     async function handleLogin() {
-        const pass = document.getElementById('password').value;
-        const email = document.getElementById('read-only-email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('error-2');
+        
+        const docRef = db.collection('users').doc(currentUserEmail);
+        const doc = await docRef.get();
 
-        if (!globalUserData) {
-            // Re-fetch if needed
-            const snap = await db.collection('users').where('email', '==', email).get();
-            if(!snap.empty) globalUserData = snap.docs[0].data();
-        }
-
-        if (globalUserData && globalUserData.password === pass) {
-            // Success
-            const session = {
-                email: globalUserData.email,
-                name: globalUserData.firstName + ' ' + globalUserData.lastName,
-                dpColor: globalUserData.profileColor || '#000',
-                loginTime: new Date().toISOString()
-            };
-
-            // Add to multi-login list
-            let list = JSON.parse(localStorage.getItem('x_users_list') || '[]');
-            // remove duplicates
-            list = list.filter(u => u.email !== session.email);
-            list.push(session);
-            localStorage.setItem('x_users_list', JSON.stringify(list));
-            
-            // Set active user
-            localStorage.setItem('x_current_user', JSON.stringify(session));
-
-            // Redirect
-            window.location.href = "https://abc.xyz";
-        } else {
-            showToast("Wrong password");
+        if (doc.exists) {
+            if (doc.data().password === password) {
+                // Success
+                let sessions = JSON.parse(localStorage.getItem('x_users_sessions') || '[]');
+                if (!sessions.find(s => s.email === currentUserEmail)) {
+                    sessions.push({ email: currentUserEmail, data: doc.data() });
+                    localStorage.setItem('x_users_sessions', JSON.stringify(sessions));
+                }
+                
+                // URL Parameter logic check (Case 4 / Logic)
+                const type = urlParams.get('type');
+                if(type === 'another-login') {
+                    // Just stay or go to switcher? Prompt implies not redirecting to main site yet
+                    window.location.href = "3.html"; 
+                } else {
+                    window.location.href = "https://abc.xyz";
+                }
+            } else {
+                errorDiv.innerText = "Wrong password.";
+                errorDiv.style.display = 'block';
+            }
         }
     }
 
-    function togglePass() {
-        const p = document.getElementById('password');
-        const i = document.querySelector('.pass-toggle');
-        if (p.type === 'password') {
-            p.type = 'text';
-            i.classList.remove('fa-eye-slash');
-            i.classList.add('fa-eye');
-        } else {
-            p.type = 'password';
-            i.classList.add('fa-eye-slash');
-            i.classList.remove('fa-eye');
-        }
-    }
-
-    function goToForgotEmail() {
-        // Redirect to 4.html
-        window.location.href = "4.html";
-    }
-
-    function goToForgotPassword() {
-        const email = document.getElementById('read-only-email').value;
-        // Redirect to 5.html with param
-        window.location.href = `5.html?email=${email}`;
+    function forgotPassword() {
+        window.location.href = `5.html?email=${currentUserEmail}`;
     }
 </script>
 </body>
