@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; background-color: #f6f8fc; height: 100vh; overflow: hidden; }
+        
+        /* Header */
+        header {
+            background-color: white; padding: 10px 20px; display: flex; align-items: center; 
+            justify-content: space-between; border-bottom: 1px solid #e0e0e0; height: 50px;
+        }
+        .logo { font-size: 20px; color: #444; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-profile img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .logout { color: #d93025; cursor: pointer; font-weight: bold; font-size: 0.9em; }
+
+        /* Layout */
+        .main-container { display: flex; height: calc(100vh - 71px); }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: white; padding-top: 20px; display: flex; flex-direction: column; }
+        .compose-btn-container { padding: 0 20px 20px 20px; }
+        .compose-btn {
+            background: white; border: 1px solid #dadce0; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+            border-radius: 24px; padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: box-shadow .2s; font-size: 14px; font-weight: 500; color: #3c4043;
+        }
+        .compose-btn:hover { box-shadow: 0 1px 3px 1px rgba(60,64,67,0.15); background: #f8f9fa; }
+        
+        /* Content Area */
+        .content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
+
+        /* Inbox List */
+        .email-item {
+            background: white; border-bottom: 1px solid #f1f3f4; padding: 10px 15px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; transition: 0.1s;
+        }
+        .email-item:hover { box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); z-index: 1; }
+        .email-sender { font-weight: bold; width: 20%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .email-subject { color: #5f6368; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px;}
+        .email-date { font-size: 12px; color: #5f6368; width: 100px; text-align: right;}
+        .starred { color: #f4b400 !important; }
+
+        /* Compose View */
+        .compose-box { background: white; max-width: 600px; margin: 0 auto; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #666; font-size: 0.9em; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea.form-input { height: 200px; resize: none; font-family: sans-serif; }
+        .send-btn { background: #1a73e8; color: white; border: none; padding: 10px 25px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* Read View */
+        .read-view { background: white; padding: 30px; border-radius: 8px; max-width: 800px; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .read-header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .read-subject { font-size: 22px; margin: 0 0 10px 0; }
+        .read-meta { color: #666; font-size: 0.9em; display: flex; justify-content: space-between; }
+        .read-body { white-space: pre-wrap; line-height: 1.6; }
+        .back-btn { margin-bottom: 20px; cursor: pointer; color: #5f6368; display: flex; align-items: center; gap: 5px; background: none; border: none; font-size: 14px;}
+
+        /* Context Menu (Long Press) */
+        #context-menu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .context-box { background: white; width: 300px; border-radius: 8px; overflow: hidden; }
+        .context-option { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .context-option:hover { background: #f5f5f5; }
+        .context-option:last-child { border: none; }
+        .context-option.delete { color: #d93025; }
+
+        /* Loading Spinner */
+        #loader { display: none; justify-content: center; margin-top: 20px; color: #1a73e8; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <span class="material-icons" style="color:#4285f4">mail</span> MyMail
+    </div>
+    <div class="user-profile">
+        <span id="display-name">User</span>
+        <img id="display-pic" src="" alt="Profile">
+        <span class="logout" onclick="logout()">Logout</span>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <div class="compose-btn-container">
+            <div class="compose-btn" onclick="navigateTo('compose')">
+                <span class="material-icons" style="color:#d93025; font-size: 24px;">add</span> Compose
+            </div>
+        </div>
+        <div class="context-option" onclick="navigateTo('inbox')">
+            <span class="material-icons">inbox</span> Inbox
+        </div>
+    </div>
+
+    <div class="content" id="main-content">
+        <!-- Dynamic Content loads here -->
+        <div id="loader">Loading...</div>
+    </div>
+</div>
+
+<!-- Custom Context Menu for Long Press -->
+<div id="context-menu" onclick="closeContextMenu(event)">
+    <div class="context-box" onclick="event.stopPropagation()">
+        <div class="context-option" onclick="actionStar()">
+            <span class="material-icons">star_border</span> Star / Unstar
+        </div>
+        <div class="context-option" onclick="actionLabel()">
+            <span class="material-icons">label</span> Create New Label
+        </div>
+        <div class="context-option delete" onclick="actionDelete()">
+            <span class="material-icons">delete</span> Delete
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Config ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // --- Auth Check ---
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+        window.location.href = "login.html";
+    }
+
+    // Load User UI
+    document.getElementById('display-name').textContent = localStorage.getItem("userName");
+    document.getElementById('display-pic').src = localStorage.getItem("userPic") || "https://via.placeholder.com/35";
+
+    // --- Routing Logic ---
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    function navigateTo(view, extra = "") {
+        let newUrl = `1.html?v=${view}`;
+        if(extra) newUrl += `&${extra}`;
+        history.pushState({}, "", newUrl);
+        renderPage();
+    }
+
+    window.onpopstate = renderPage;
+
+    function renderPage() {
+        const view = getUrlParameter('v') || 'inbox'; 
+        const contentDiv = document.getElementById('main-content');
+        contentDiv.innerHTML = "<div id='loader'>Loading...</div>"; // Reset content
+
+        if (view === 'inbox') {
+            loadInbox(contentDiv);
+        } else if (view === 'compose') {
+            loadCompose(contentDiv);
+        } else if (view === 'read') {
+            const id = getUrlParameter('id');
+            loadEmail(contentDiv, id);
+        }
+    }
+
+    // --- Views ---
+
+    function loadInbox(container) {
+        document.getElementById('loader').style.display = 'flex';
+        
+        const list = document.createElement('div');
+        container.appendChild(list);
+
+        // FIX: Removed .orderBy('timestamp') from Firestore query to avoid Indexing errors.
+        // We will sort the data in Javascript instead.
+        db.collection('emails')
+            .where('to', '==', userEmail)
+            .onSnapshot((snapshot) => {
+                document.getElementById('loader').style.display = 'none';
+                list.innerHTML = ""; 
+                
+                if(snapshot.empty) {
+                    list.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>Inbox is empty</p>";
+                    return;
+                }
+
+                // Convert snapshot to array
+                let emails = [];
+                snapshot.forEach(doc => {
+                    emails.push({ id: doc.id, ...doc.data() });
+                });
+
+                // SORTING IN JS (Newest First)
+                emails.sort((a, b) => b.timestamp - a.timestamp);
+
+                emails.forEach(data => {
+                    const item = document.createElement('div');
+                    item.className = 'email-item';
+                    
+                    const starColor = data.isStarred ? '#f4b400' : '#dadce0';
+                    const starIcon = data.isStarred ? 'star' : 'star_border';
+                    const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'Just now';
+
+                    item.innerHTML = `
+                        <span class="material-icons" style="color:${starColor}; margin-right:10px;">${starIcon}</span>
+                        <div class="email-sender">${data.from}</div>
+                        <div class="email-subject">
+                            ${data.labels && data.labels.length > 0 ? `<span style="background:#ddd; font-size:10px; padding:2px 4px; border-radius:3px;">${data.labels[0]}</span>` : ''} 
+                            ${data.subject} - <span style="color:#999">${data.body.substring(0, 30)}...</span>
+                        </div>
+                        <div class="email-date">${dateStr}</div>
+                    `;
+
+                    item.onclick = (e) => navigateTo('read', `id=${data.id}`);
+                    addLongPressEvent(item, data.id);
+                    list.appendChild(item);
+                });
+            }, (error) => {
+                // ERROR HANDLING
+                console.error("Inbox Error:", error);
+                container.innerHTML = `<p style="color:red; text-align:center;">Error loading emails: ${error.message}</p>`;
+            });
+    }
+
+    function loadCompose(container) {
+        container.innerHTML = `
+            <div class="compose-box">
+                <h3 style="margin-top:0">New Message</h3>
+                <div class="form-group">
+                    <label>From</label>
+                    <input type="text" class="form-input" value="${userEmail}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>To</label>
+                    <input type="email" id="to-email" class="form-input" placeholder="Receiver Email (must be exact)">
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="subject" class="form-input" placeholder="Subject">
+                </div>
+                <div class="form-group">
+                    <textarea id="body" class="form-input" placeholder="Type your message here..."></textarea>
+                </div>
+                <button class="send-btn" onclick="sendEmail()">Send</button>
+            </div>
+        `;
+    }
+
+    function loadEmail(container, docId) {
+        if(!docId) return;
+        db.collection('emails').doc(docId).get().then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'Just now';
+                container.innerHTML = `
+                    <div class="read-view">
+                        <button class="back-btn" onclick="window.history.back()">
+                            <span class="material-icons">arrow_back</span> Back
+                        </button>
+                        <div class="read-header">
+                            <h1 class="read-subject">${data.subject}</h1>
+                            <div class="read-meta">
+                                <span><strong>From:</strong> ${data.from}</span>
+                                <span>${dateStr}</span>
+                            </div>
+                            <div class="read-meta" style="margin-top:5px">
+                                <span><strong>To:</strong> Me</span>
+                            </div>
+                        </div>
+                        <div class="read-body">${data.body}</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = "<p>Email not found.</p>";
+            }
+        });
+    }
+
+    // --- Actions ---
+
+    function sendEmail() {
+        const to = document.getElementById('to-email').value.toLowerCase().trim(); // Ensure lowercase and no spaces
+        const subject = document.getElementById('subject').value;
+        const body = document.getElementById('body').value;
+
+        if(!to || !subject || !body) return alert("Please fill all fields");
+
+        db.collection("emails").add({
+            from: userEmail,
+            to: to,
+            subject: subject,
+            body: body,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            isStarred: false,
+            labels: [],
+            isDeleted: false
+        }).then(() => {
+            alert("Email Sent!");
+            navigateTo('inbox');
+        }).catch((error) => {
+            console.error("Error sending email: ", error);
+            alert("Error sending email: " + error.message);
+        });
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    // --- Long Press Logic ---
+    let pressTimer;
+    let selectedEmailId = null;
+
+    function addLongPressEvent(element, id) {
+        element.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => openContextMenu(id), 800);
+        });
+        element.addEventListener('touchend', () => clearTimeout(pressTimer));
+        element.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+        element.addEventListener('mousedown', (e) => {
+            if(e.button === 0) {
+                pressTimer = setTimeout(() => openContextMenu(id), 800);
+            }
+        });
+        element.addEventListener('mouseup', () => clearTimeout(pressTimer));
+        element.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+    }
+
+    function openContextMenu(id) {
+        selectedEmailId = id;
+        document.getElementById('context-menu').style.display = 'flex';
+        if (navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function closeContextMenu(e) {
+        if(e) e.preventDefault();
+        document.getElementById('context-menu').style.display = 'none';
+        selectedEmailId = null;
+    }
+
+    function actionDelete() {
+        if(!selectedEmailId) return;
+        if(confirm("Delete this email?")) {
+            db.collection("emails").doc(selectedEmailId).delete().then(closeContextMenu);
+        }
+    }
+
+    function actionStar() {
+        if(!selectedEmailId) return;
+        db.collection("emails").doc(selectedEmailId).get().then(doc => {
+            const current = doc.data().isStarred;
+            db.collection("emails").doc(selectedEmailId).update({
+                isStarred: !current
+            }).then(closeContextMenu);
+        });
+    }
+
+    function actionLabel() {
+        if(!selectedEmailId) return;
+        const label = prompt("Enter Label Name:");
+        if(label) {
+            db.collection("emails").doc(selectedEmailId).update({
+                labels: firebase.firestore.FieldValue.arrayUnion(label)
+            }).then(closeContextMenu);
+        }
+    }
+
+    // Initial Load
+    renderPage();
+
+</script>
+
+</body>
+</html>
