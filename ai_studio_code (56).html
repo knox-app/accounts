@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MyMail App</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* --- GLOBAL STYLES --- */
+        body { 
+            font-family: 'Roboto', 'Arial', sans-serif; 
+            margin: 0; 
+            background-color: #f6f8fc; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: white; 
+            padding: 10px 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 1px solid #e0e0e0; 
+            height: 50px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .logo { font-size: 18px; color: #444; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-profile img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+        .logout { font-size: 20px; color: #5f6368; cursor: pointer; }
+
+        /* --- LAYOUT --- */
+        .main-container { 
+            display: flex; 
+            flex: 1; 
+            overflow: hidden; 
+            position: relative;
+        }
+        
+        /* --- SIDEBAR / BOTTOM NAV --- */
+        .sidebar { 
+            width: 240px; 
+            background: white; 
+            padding-top: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .nav-item {
+            padding: 12px 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #5f6368;
+            font-weight: 500;
+            border-radius: 0 20px 20px 0;
+            margin-right: 10px;
+        }
+        .nav-item:hover { background-color: #f1f3f4; }
+        .nav-item.active { background-color: #e8f0fe; color: #1a73e8; }
+        .nav-item .material-icons { font-size: 22px; }
+
+        /* Compose Button Desktop */
+        .compose-btn-desktop {
+            margin: 0 0 15px 15px;
+            background: white;
+            border: 1px solid #dadce0;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+            border-radius: 24px;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            width: fit-content;
+            color: #3c4043;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .compose-btn-desktop:hover { box-shadow: 0 4px 6px rgba(60,64,67,0.15); background: #f8f8f8; }
+
+        /* --- CONTENT AREA --- */
+        .content { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding-bottom: 80px; /* Space for FAB/Nav on mobile */
+            background: #fff;
+        }
+
+        /* --- EMAIL LIST --- */
+        .email-item {
+            padding: 14px 15px;
+            border-bottom: 1px solid #f1f3f4;
+            cursor: pointer;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .email-item:active { background-color: #e8f0fe; }
+        
+        .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #1a73e8; color: white; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 18px; flex-shrink: 0;
+        }
+
+        .email-details { flex: 1; overflow: hidden; }
+        
+        .email-top-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .email-sender { font-weight: bold; font-size: 15px; color: #202124; }
+        .email-date { font-size: 12px; color: #5f6368; }
+        
+        .email-subject { font-size: 14px; font-weight: bold; color: #202124; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .email-snippet { font-size: 14px; color: #5f6368; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .starred-icon { color: #dadce0; cursor: pointer; }
+        .starred-icon.active { color: #f4b400; }
+
+        /* --- READ VIEW --- */
+        .read-view { padding: 20px; }
+        .read-subject { font-size: 20px; margin: 10px 0; }
+        .meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .read-body { font-size: 15px; line-height: 1.6; color: #222; white-space: pre-wrap; }
+        .back-nav { display: flex; align-items: center; padding: 10px 0; color: #5f6368; cursor: pointer; border-bottom: 1px solid #eee;}
+
+        /* --- COMPOSE VIEW --- */
+        .compose-container { display: flex; flex-direction: column; height: 100%; background: white; }
+        .compose-header { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #eee; justify-content: space-between;}
+        .send-action { color: #1a73e8; font-weight: bold; font-size: 16px; cursor: pointer; padding: 10px; }
+        .input-row { border-bottom: 1px solid #f1f3f4; display: flex; }
+        .input-row input { width: 100%; border: none; padding: 15px; font-size: 15px; outline: none; }
+        .input-row label { padding: 15px 0 15px 15px; color: #666; font-size: 15px; }
+        textarea.body-input { flex: 1; border: none; padding: 15px; font-size: 15px; resize: none; outline: none; font-family: inherit;}
+
+        /* --- FLOATING COMPOSE BTN (Mobile) --- */
+        .fab {
+            position: fixed; bottom: 80px; right: 20px;
+            width: 56px; height: 56px; background: white;
+            border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: none; justify-content: center; align-items: center;
+            color: #d93025; cursor: pointer; z-index: 100;
+        }
+
+        /* --- CONTEXT MENU --- */
+        #context-menu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .context-box { background: white; width: 80%; border-radius: 8px; overflow: hidden; }
+        .context-opt { padding: 15px 20px; border-bottom: 1px solid #eee; font-size: 16px; }
+        .context-opt.del { color: red; }
+
+        /* --- MOBILE MEDIA QUERY --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+                flex-direction: row; border-top: 1px solid #ddd; border-right: none;
+                padding-top: 0; justify-content: space-around; z-index: 100;
+                border-radius: 0;
+            }
+            .compose-btn-desktop { display: none; }
+            .nav-item { 
+                flex-direction: column; gap: 4px; font-size: 10px; padding: 8px; 
+                margin: 0; border-radius: 0; background: none !important;
+                color: #5f6368;
+            }
+            .nav-item.active { color: #1a73e8; }
+            .nav-item .material-icons { font-size: 24px; }
+            .content { padding-bottom: 70px; } /* Space for bottom bar */
+            .fab { display: flex; } /* Show FAB on mobile */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <span class="material-icons" style="color:#1a73e8">mail</span> MyMail
+    </div>
+    <div class="user-profile">
+        <img id="display-pic" src="" alt="User">
+        <span class="material-icons logout" onclick="logout()">logout</span>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <!-- Desktop Compose -->
+        <div class="compose-btn-desktop" onclick="navigateTo('compose')">
+            <span class="material-icons" style="color:#d93025">add</span> Compose
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-item" id="nav-inbox" onclick="navigateTo('inbox')">
+            <span class="material-icons">inbox</span> Inbox
+        </div>
+        <div class="nav-item" id="nav-sent" onclick="navigateTo('sent')">
+            <span class="material-icons">send</span> Sent
+        </div>
+    </div>
+
+    <div class="content" id="main-content">
+        <!-- Content Loads Here -->
+        <div style="text-align:center; padding-top:50px; color:#888;">Loading...</div>
+    </div>
+
+    <!-- Mobile Compose Button -->
+    <div class="fab" onclick="navigateTo('compose')">
+        <span class="material-icons" style="font-size: 32px;">edit</span>
+    </div>
+</div>
+
+<!-- Context Menu (Long Press) -->
+<div id="context-menu" onclick="closeContextMenu(event)">
+    <div class="context-box" onclick="event.stopPropagation()">
+        <div class="context-opt" onclick="actionStar()">Star / Unstar</div>
+        <div class="context-opt" onclick="actionLabel()">Add Label</div>
+        <div class="context-opt del" onclick="actionDelete()">Delete Email</div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Config ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Check Auth
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) window.location.href = "login.html";
+
+    // Set Header Info
+    document.getElementById('display-pic').src = localStorage.getItem("userPic") || "https://via.placeholder.com/32";
+
+    // --- Navigation Logic ---
+    function navigateTo(view, params = "") {
+        let url = `1.html?v=${view}`;
+        if(params) url += `&${params}`;
+        history.pushState({}, "", url);
+        renderPage();
+    }
+
+    window.onpopstate = renderPage;
+
+    function renderPage() {
+        const params = new URLSearchParams(location.search);
+        const view = params.get('v') || 'inbox';
+        const contentDiv = document.getElementById('main-content');
+        const fab = document.querySelector('.fab');
+
+        // Update Nav Active State
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(view === 'inbox') document.getElementById('nav-inbox').classList.add('active');
+        if(view === 'sent') document.getElementById('nav-sent').classList.add('active');
+
+        // Toggle FAB
+        fab.style.display = (view === 'inbox' || view === 'sent') && window.innerWidth <= 768 ? 'flex' : 'none';
+
+        if(view === 'inbox') {
+            loadEmailList(contentDiv, 'inbox');
+        } else if (view === 'sent') {
+            loadEmailList(contentDiv, 'sent');
+        } else if (view === 'compose') {
+            loadCompose(contentDiv);
+        } else if (view === 'read') {
+            loadReadView(contentDiv, params.get('id'));
+        }
+    }
+
+    // --- Loading Views ---
+
+    function loadEmailList(container, type) {
+        container.innerHTML = `<div style="padding:20px; text-align:center; color:#888;">Loading ${type}...</div>`;
+        
+        let query;
+        if (type === 'inbox') {
+            // Get emails SENT TO me
+            query = db.collection('emails').where('to', '==', userEmail);
+        } else {
+            // Get emails SENT BY me
+            query = db.collection('emails').where('from', '==', userEmail);
+        }
+
+        query.onSnapshot(snapshot => {
+            container.innerHTML = "";
+            if (snapshot.empty) {
+                container.innerHTML = `<div style="padding:40px; text-align:center; color:#ccc;">No emails in ${type}</div>`;
+                return;
+            }
+
+            let emails = [];
+            snapshot.forEach(doc => emails.push({ id: doc.id, ...doc.data() }));
+            
+            // Sort in JS to avoid index errors
+            emails.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+            emails.forEach(data => {
+                const el = document.createElement('div');
+                el.className = 'email-item';
+                
+                // If Sent box, show "To: Receiver", if Inbox show "Sender Name"
+                const displayName = type === 'sent' ? `To: ${data.to}` : data.from.split('@')[0];
+                const avatarLetter = displayName.replace('To: ', '').charAt(0).toUpperCase();
+                const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'Now';
+                const starColor = data.isStarred ? '#f4b400' : '#dadce0';
+
+                el.innerHTML = `
+                    <div class="avatar">${avatarLetter}</div>
+                    <div class="email-details">
+                        <div class="email-top-row">
+                            <span class="email-sender">${displayName}</span>
+                            <span class="email-date">${dateStr}</span>
+                        </div>
+                        <div class="email-subject">${data.subject}</div>
+                        <div class="email-snippet">${data.body}</div>
+                    </div>
+                    <span class="material-icons starred-icon" style="color:${starColor}">star</span>
+                `;
+
+                // Clicks
+                el.onclick = () => navigateTo('read', `id=${data.id}`);
+                addLongPress(el, data.id);
+                
+                container.appendChild(el);
+            });
+        });
+    }
+
+    function loadCompose(container) {
+        container.innerHTML = `
+            <div class="compose-container">
+                <div class="compose-header">
+                    <span class="material-icons" onclick="history.back()" style="cursor:pointer">close</span>
+                    <span class="send-action" onclick="sendEmail()">SEND</span>
+                </div>
+                <div class="input-row">
+                    <label>To</label>
+                    <input type="email" id="to-email" placeholder="Recipient email">
+                </div>
+                <div class="input-row">
+                    <label>Subject</label>
+                    <input type="text" id="subject" placeholder="Subject">
+                </div>
+                <textarea id="body" class="body-input" placeholder="Compose email"></textarea>
+            </div>
+        `;
+    }
+
+    function loadReadView(container, docId) {
+        container.innerHTML = '<div style="padding:20px;">Loading...</div>';
+        db.collection('emails').doc(docId).get().then(doc => {
+            if(!doc.exists) return container.innerHTML = 'Not Found';
+            const data = doc.data();
+            const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : '';
+            
+            container.innerHTML = `
+                <div class="read-view">
+                    <div class="back-nav" onclick="history.back()">
+                        <span class="material-icons">arrow_back</span>
+                    </div>
+                    <h2 class="read-subject">${data.subject}</h2>
+                    <div class="meta-row">
+                        <div class="avatar">${data.from.charAt(0).toUpperCase()}</div>
+                        <div style="flex:1">
+                            <div style="font-weight:bold">${data.from}</div>
+                            <div style="font-size:12px; color:#666">to ${data.to}</div>
+                        </div>
+                        <div style="font-size:12px; color:#666">${date}</div>
+                    </div>
+                    <div class="read-body">${data.body}</div>
+                </div>
+            `;
+        });
+    }
+
+    // --- Actions ---
+
+    function sendEmail() {
+        const to = document.getElementById('to-email').value.toLowerCase().trim();
+        const sub = document.getElementById('subject').value;
+        const body = document.getElementById('body').value;
+
+        if(!to || !sub || !body) return alert("Fill all fields");
+
+        db.collection("emails").add({
+            from: userEmail,
+            to: to,
+            subject: sub,
+            body: body,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            isStarred: false,
+            labels: []
+        }).then(() => {
+            alert("Sent!");
+            navigateTo('sent'); // Redirect to Sent box
+        });
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    // --- Long Press & Context Menu ---
+    let timer; 
+    let selectedId = null;
+
+    function addLongPress(el, id) {
+        const start = () => timer = setTimeout(() => openContext(id), 600);
+        const end = () => clearTimeout(timer);
+        
+        el.addEventListener('touchstart', start);
+        el.addEventListener('touchend', end);
+        el.addEventListener('mousedown', (e) => { if(e.button===0) start(); });
+        el.addEventListener('mouseup', end);
+    }
+
+    function openContext(id) {
+        selectedId = id;
+        document.getElementById('context-menu').style.display = 'flex';
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function closeContextMenu(e) {
+        if(e) e.preventDefault();
+        document.getElementById('context-menu').style.display = 'none';
+    }
+
+    function actionDelete() {
+        if(selectedId && confirm("Delete?")) {
+            db.collection("emails").doc(selectedId).delete().then(closeContextMenu);
+        }
+    }
+
+    function actionStar() {
+        if(selectedId) {
+            db.collection("emails").doc(selectedId).get().then(doc => {
+                db.collection("emails").doc(selectedId).update({ isStarred: !doc.data().isStarred });
+                closeContextMenu();
+            });
+        }
+    }
+
+    function actionLabel() {
+        const lbl = prompt("Label Name:");
+        if(selectedId && lbl) {
+            db.collection("emails").doc(selectedId).update({
+                labels: firebase.firestore.FieldValue.arrayUnion(lbl)
+            }).then(closeContextMenu);
+        }
+    }
+
+    // Init
+    renderPage();
+
+</script>
+</body>
+</html>
