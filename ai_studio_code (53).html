@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email App - Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+        h2 { color: #1a73e8; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #1557b0; }
+        .toggle-link {
+            margin-top: 15px;
+            display: block;
+            color: #1a73e8;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toggle-link:hover { text-decoration: underline; }
+        .hidden { display: none; }
+        
+        /* PFP Preview Style */
+        #pfp-preview { 
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            margin-bottom: 10px; 
+            display: none; 
+            margin-left: auto; 
+            margin-right: auto;
+            border: 2px solid #1a73e8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+        <h2>Sign In</h2>
+        <input type="email" id="login-email" placeholder="Email Address">
+        <input type="password" id="login-pass" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <span class="toggle-link" onclick="toggleView()">Create an account</span>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signup-form" class="hidden">
+        <h2>Create Account</h2>
+        <img id="pfp-preview" src="" alt="Profile Preview">
+        <label for="signup-pfp" style="font-size:12px; color:#666; cursor:pointer;">Select Profile Picture</label>
+        <input type="file" id="signup-pfp" accept="image/*" onchange="previewImage()">
+        
+        <input type="text" id="signup-name" placeholder="Full Name">
+        <input type="date" id="signup-dob" placeholder="Date of Birth">
+        <input type="email" id="signup-email" placeholder="Email Address (e.g., user@app.com)">
+        <input type="password" id="signup-pass" placeholder="Password">
+        
+        <button onclick="signup()">Sign Up</button>
+        <span class="toggle-link" onclick="toggleView()">Back to Login</span>
+    </div>
+</div>
+
+<!-- Firebase Config -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Auto-redirect if logged in
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            window.location.href = "1.html?1=inbox";
+        }
+    });
+
+    let pfpBase64 = "";
+
+    function toggleView() {
+        document.getElementById('login-form').classList.toggle('hidden');
+        document.getElementById('signup-form').classList.toggle('hidden');
+    }
+
+    function previewImage() {
+        const file = document.getElementById('signup-pfp').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('pfp-preview').src = e.target.result;
+                document.getElementById('pfp-preview').style.display = 'block';
+                pfpBase64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function signup() {
+        // IMPORTANT: Convert to Lowercase to prevent "User not found" errors
+        const email = document.getElementById('signup-email').value.toLowerCase().trim();
+        const pass = document.getElementById('signup-pass').value;
+        const name = document.getElementById('signup-name').value;
+        const dob = document.getElementById('signup-dob').value;
+
+        if(!email || !pass || !name) return alert("Please fill all fields");
+
+        auth.createUserWithEmailAndPassword(email, pass)
+            .then((cred) => {
+                // Save extra details in Firestore
+                return db.collection('users').doc(email).set({
+                    name: name,
+                    dob: dob,
+                    email: email,
+                    pfp: pfpBase64 || "https://cdn-icons-png.flaticon.com/512/149/149071.png", // Default Icon
+                    uid: cred.user.uid
+                });
+            })
+            .then(() => {
+                alert("Account Created! Redirecting...");
+                window.location.href = "1.html?1=inbox";
+            })
+            .catch((error) => {
+                alert("Error: " + error.message);
+            });
+    }
+
+    function login() {
+        // IMPORTANT: Convert to Lowercase
+        const email = document.getElementById('login-email').value.toLowerCase().trim();
+        const pass = document.getElementById('login-pass').value;
+
+        if(!email || !pass) return alert("Please enter email and password");
+
+        auth.signInWithEmailAndPassword(email, pass)
+            .then(() => {
+                window.location.href = "1.html?1=inbox";
+            })
+            .catch((error) => {
+                alert("Login Failed: " + error.message);
+            });
+    }
+</script>
+
+</body>
+</html>
