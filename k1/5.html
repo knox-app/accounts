@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Gateway</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body { background: #f0f2f5; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader"></div>
+    <h3 id="status-text">Processing...</h3>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    window.onload = async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const encyKey = urlParams.get('encykey');
+        const sendTo = urlParams.get('sendto');
+        const rawMsg = urlParams.get('msg');
+        const status = document.getElementById('status-text');
+
+        if (!encyKey || !sendTo || !rawMsg) {
+            document.getElementById('loader').style.display = 'none';
+            status.innerText = "Error: Missing parameters";
+            status.className = "error";
+            return;
+        }
+
+        try {
+            const partnerDoc = await db.collection('api_partners').doc(encyKey).get();
+            if (!partnerDoc.exists) throw new Error("Invalid API Key");
+
+            const data = partnerDoc.data();
+            
+            // Generate Subject based on Type
+            let subject = "Notification";
+            if (data.defaultType === "OTP") subject = "Your Verification Code";
+            else if (data.defaultType === "ALERT") subject = "Security Alert";
+
+            // Add Email to DB (Include the photoURL)
+            await db.collection('emails').add({
+                to: sendTo.toLowerCase(),
+                from: data.email,
+                fromName: data.company,
+                fromPhoto: data.photoURL, // <--- Passing the Logo URL
+                subject: subject,
+                message: rawMsg,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                type: 'api_automated'
+            });
+
+            document.getElementById('loader').style.display = 'none';
+            status.innerText = "Success! Email Delivered.";
+            status.className = "success";
+
+        } catch (error) {
+            document.getElementById('loader').style.display = 'none';
+            status.innerText = error.message;
+            status.className = "error";
+        }
+    };
+</script>
+</body>
+</html>
