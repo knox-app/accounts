@@ -8,19 +8,18 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <!-- Icons & Fonts -->
+    <!-- Material Icons & Font -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary: #c2e7ff; 
+            --primary: #c2e7ff;
             --primary-text: #001d35;
-            --accent: #0b57d0;
-            --sidebar-width: 256px;
             --bg-color: #f6f8fc;
+            --sidebar-width: 256px;
         }
-        
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
@@ -29,129 +28,115 @@
             background: #f6f8fc; height: 64px; display: flex; align-items: center; padding: 0 16px;
             justify-content: space-between; flex-shrink: 0;
         }
-        .brand { display: flex; align-items: center; font-size: 22px; color: #444; width: 240px; }
-        .menu-btn { cursor: pointer; margin-right: 12px; color: #444; padding: 12px; border-radius: 50%; }
-        .menu-btn:hover { background-color: rgba(60,64,67,0.08); }
-        
-        /* Search */
+        .brand { display: flex; align-items: center; gap: 10px; width: 240px; }
+        .menu-btn { cursor: pointer; color: #444; padding: 8px; border-radius: 50%; }
         .search-container { flex: 1; max-width: 720px; display: flex; justify-content: center; }
         .search-bar {
             width: 100%; background: #eaf1fb; height: 48px; border-radius: 24px;
-            display: flex; align-items: center; padding: 0 20px; transition: 0.2s;
+            display: flex; align-items: center; padding: 0 20px;
         }
-        .search-bar:focus-within { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .search-input { border: none; background: transparent; flex: 1; font-size: 16px; outline: none; margin-left: 10px; }
-
-        /* User Avatar */
-        .user-avatar { 
-            width: 32px; height: 32px; border-radius: 50%; background: #5f6368; color: white; 
-            display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; margin-left: 10px;
-        }
-
-        /* --- LAYOUT --- */
-        .workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #0b57d0; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
 
         /* --- SIDEBAR --- */
         .sidebar {
             width: var(--sidebar-width); background: #f6f8fc; padding: 0 12px; display: flex; flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 50;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; position: relative;
         }
         .compose-btn {
             background: var(--primary); color: var(--primary-text); border-radius: 16px; padding: 16px 24px;
-            display: flex; align-items: center; font-weight: 600; cursor: pointer; width: fit-content;
-            margin: 16px 0 24px 0; border: none; font-size: 14px; transition: box-shadow 0.2s;
+            display: flex; align-items: center; font-weight: 600; cursor: pointer; width: fit-content; margin: 16px 0 24px 0; border: none;
         }
-        .compose-btn:hover { box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3); }
-        
         .nav-item {
             padding: 0 12px 0 26px; height: 32px; border-radius: 0 16px 16px 0; cursor: pointer; color: #444;
             display: flex; align-items: center; font-size: 14px; font-weight: 500; margin-bottom: 4px;
         }
         .nav-item.active { background: #d3e3fd; color: #001d35; font-weight: 700; }
         .nav-item .material-icons { margin-right: 18px; font-size: 20px; }
-        .badge { margin-left: auto; font-size: 12px; font-weight: bold; }
 
-        /* --- MAIN CONTENT --- */
+        /* --- CONTENT AREA --- */
+        .workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
         .content-area { 
             flex: 1; background: white; border-radius: 16px; margin: 0 16px 16px 0; 
             overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
         }
 
-        /* Bulk Action Bar (Hidden by default) */
-        .bulk-actions {
-            height: 50px; background: #e8f0fe; display: none; align-items: center; padding: 0 20px; color: #174ea6;
-        }
-        .bulk-actions.active { display: flex; }
-
-        /* Email List */
-        .email-list { overflow-y: auto; flex: 1; }
+        /* --- EMAIL LIST (DESKTOP GRID) --- */
+        .email-list { overflow-y: auto; flex: 1; padding-bottom: 80px; }
         
         .email-row {
-            display: grid; grid-template-columns: 40px 40px 180px 1fr 70px; padding: 10px 16px;
-            border-bottom: 1px solid #f2f6fc; cursor: pointer; align-items: center; font-size: 14px; color: #202124;
-            transition: background 0.1s;
+            display: grid; 
+            grid-template-columns: 40px 40px 200px 1fr 100px; /* Checkbox | Star | Sender | Content | Date */
+            padding: 10px 16px; border-bottom: 1px solid #f2f6fc; cursor: pointer; align-items: center; 
+            font-size: 14px; color: #202124;
         }
         .email-row:hover { box-shadow: inset 1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,0.3); z-index: 1; background: #fafafb; }
         .email-row.unread { background: #fff; font-weight: 700; color: #000; }
         .email-row.unread .sender, .email-row.unread .subject { font-weight: 800; }
-        .email-row.selected { background: #c2e7ff !important; }
-
-        .checkbox { cursor: pointer; color: #5f6368; }
-        .star-icon { cursor: pointer; color: #dadce0; }
-        .star-icon.active { color: #f4b400; }
         
-        .sender { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px;}
-        .content-prev { display: flex; overflow: hidden; }
-        .subject { white-space: nowrap; }
-        .snippet { color: #5f6368; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 5px; font-weight: 400;}
+        .sender { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 15px; }
+        .content-prev { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #5f6368; }
+        .subject { color: #000; }
+        .date { text-align: right; font-size: 12px; font-weight: 500; }
+
+        .mobile-avatar { display: none; } /* Hidden on desktop */
+
+        /* --- MOBILE STYLES (THE FIX) --- */
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); background: white; width: 280px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+            .sidebar.active { transform: translateX(0); }
+            .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
+            .overlay.active { display: block; }
+
+            .content-area { margin: 0; border-radius: 0; }
+            .search-bar { display: none; } /* Hide search bar on mobile header */
+            .brand { width: auto; font-size: 20px; }
+
+            /* TRANSFORM GRID TO FLEX ROW FOR MOBILE */
+            .email-row {
+                display: flex; /* Use Flexbox */
+                align-items: flex-start; /* Align top */
+                gap: 15px;
+                padding: 15px;
+                height: auto;
+            }
+
+            /* Hide Desktop Elements */
+            .checkbox, .star-icon { display: none; }
+            
+            /* Show Mobile Avatar */
+            .mobile-avatar { 
+                display: flex; width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; 
+                align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 18px; object-fit: cover;
+            }
+
+            /* Stack Text Vertically */
+            .email-data-container {
+                display: flex; flex-direction: column; flex: 1; overflow: hidden;
+            }
+            .row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+            .sender { font-size: 16px; font-weight: bold; width: auto; padding: 0; }
+            .date { font-size: 12px; color: #5f6368; }
+            .content-prev { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+            .subject { font-weight: 500; }
+        }
 
         /* --- READ VIEW --- */
-        #view-read { display: none; height: 100%; flex-direction: column; background: white; }
-        .read-toolbar { padding: 8px 16px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee;}
-        .icon-btn { padding: 8px; border-radius: 50%; cursor: pointer; color: #444; }
-        .icon-btn:hover { background: #f1f3f4; }
-        
-        .read-content { padding: 24px; overflow-y: auto; flex: 1; }
-        .msg-subject { font-size: 22px; margin: 0 0 20px 0; font-weight: 400; }
+        #view-read { display: none; height: 100%; flex-direction: column; background: white; z-index: 200; position: absolute; inset: 0; }
+        .read-toolbar { padding: 10px 15px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #eee; background: white; }
+        .read-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .msg-subject { font-size: 20px; margin: 10px 0 20px 0; font-weight: 400; }
         .msg-meta { display: flex; align-items: center; margin-bottom: 20px; }
-        .msg-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; object-fit: cover;}
-        .msg-body { font-size: 14px; line-height: 1.5; white-space: pre-wrap; color: #222; }
+        .msg-body { font-size: 15px; line-height: 1.6; white-space: pre-wrap; color: #222; }
 
-        /* --- MOBILE FAB (Floating Action Button) --- */
+        /* FAB */
         .fab {
             position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px;
             background: #c2e7ff; color: #001d35; border-radius: 16px; 
             display: none; align-items: center; justify-content: center;
-            box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15); z-index: 90; cursor: pointer;
+            box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15); z-index: 150; cursor: pointer;
         }
-
-        /* --- TOAST NOTIFICATION --- */
-        #toast {
-            position: fixed; bottom: 20px; left: 20px; background: #323232; color: white;
-            padding: 14px 24px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;
-            min-width: 280px; transform: translateY(100px); transition: transform 0.3s; z-index: 200;
-        }
-        #toast.active { transform: translateY(0); }
-        .undo-btn { color: #8ab4f8; font-weight: bold; cursor: pointer; margin-left: 15px; }
-
-        /* --- MOBILE RESPONSIVE --- */
-        @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); background: white; width: 280px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-            .sidebar.active { transform: translateX(0); }
-            
-            .content-area { margin: 0; border-radius: 0; }
-            .email-row { grid-template-columns: 40px 1fr 60px; padding: 12px 16px; }
-            .checkbox, .star-icon, .sender { display: none; } /* Simplified row for mobile */
-            
-            .fab { display: flex; } /* Show FAB on mobile */
-            .compose-btn { display: none; } /* Hide Sidebar button on mobile */
-            
-            .brand { width: auto; }
-            .search-bar { display: none; } /* Hide search on mobile home for simplicity */
-            
-            .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
-            .overlay.active { display: block; }
-        }
+        @media (max-width: 768px) { .fab { display: flex; } }
     </style>
 </head>
 <body>
@@ -160,17 +145,17 @@
 <div class="top-bar">
     <div class="brand">
         <span class="material-icons menu-btn" onclick="toggleSidebar()">menu</span>
-        <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r2.png" alt="Logo" style="height:22px; opacity:0.7">
+        <span style="font-weight: 500; color: #444;">Inbox</span>
     </div>
     
     <div class="search-container">
         <div class="search-bar">
             <span class="material-icons" style="color:#5f6368">search</span>
-            <input type="text" class="search-input" id="search-input" placeholder="Search in mail" onkeyup="renderEmails()">
+            <input type="text" class="search-input" id="search-input" placeholder="Search mail" onkeyup="renderEmails()">
         </div>
     </div>
     
-    <div class="user-avatar" id="user-initial" onclick="showProfile()">U</div>
+    <div class="user-avatar" id="user-initial" onclick="alert('Profile Settings coming soon')">U</div>
 </div>
 
 <div class="workspace">
@@ -181,84 +166,43 @@
         <button class="compose-btn" onclick="window.location.href='3.html'">
             <span class="material-icons" style="margin-right:12px">edit</span> Compose
         </button>
-        
-        <div class="nav-item active" id="nav-inbox" onclick="switchTab('inbox')">
-            <span class="material-icons">inbox</span> Inbox
-            <span class="badge" id="badge-inbox"></span>
-        </div>
-        <div class="nav-item" id="nav-starred" onclick="switchTab('starred')">
-            <span class="material-icons">star_border</span> Starred
-        </div>
-        <div class="nav-item" id="nav-sent" onclick="switchTab('sent')">
-            <span class="material-icons">send</span> Sent
-        </div>
-        <div class="nav-item" id="nav-archive" onclick="switchTab('archive')">
-            <span class="material-icons">archive</span> Archive
-        </div>
-        <div class="nav-item" id="nav-trash" onclick="switchTab('trash')">
-            <span class="material-icons">delete</span> Trash
-        </div>
+        <div class="nav-item active" id="nav-inbox" onclick="switchTab('inbox')"><span class="material-icons">inbox</span> Inbox</div>
+        <div class="nav-item" id="nav-starred" onclick="switchTab('starred')"><span class="material-icons">star</span> Starred</div>
+        <div class="nav-item" id="nav-sent" onclick="switchTab('sent')"><span class="material-icons">send</span> Sent</div>
+        <div class="nav-item" id="nav-trash" onclick="switchTab('trash')"><span class="material-icons">delete</span> Trash</div>
     </div>
 
     <!-- MAIN AREA -->
     <div class="content-area">
-        
-        <!-- Bulk Actions Header -->
-        <div class="bulk-actions" id="bulk-bar">
-            <span class="material-icons icon-btn" onclick="clearSelection()">close</span>
-            <span style="flex:1; margin-left:10px; font-weight:bold;" id="select-count">0 selected</span>
-            <span class="material-icons icon-btn" onclick="bulkArchive()">archive</span>
-            <span class="material-icons icon-btn" onclick="bulkDelete()">delete</span>
-            <span class="material-icons icon-btn" onclick="bulkRead()">mark_email_read</span>
+        <div class="email-list" id="email-list-container">
+            <!-- Emails go here -->
         </div>
+    </div>
 
-        <!-- LIST VIEW -->
-        <div id="view-list" style="height:100%; display:flex; flex-direction:column;">
-            <div class="email-list" id="email-list-container">
-                <!-- Javascript fills this -->
-            </div>
+    <!-- READ VIEW (Full Screen) -->
+    <div id="view-read">
+        <div class="read-toolbar">
+            <span class="material-icons" onclick="closeEmail()" style="cursor:pointer">arrow_back</span>
+            <div style="flex:1"></div>
+            <span class="material-icons" onclick="deleteCurrent()" style="cursor:pointer; margin-left:15px">delete</span>
         </div>
-
-        <!-- READ VIEW -->
-        <div id="view-read">
-            <div class="read-toolbar">
-                <span class="material-icons icon-btn" onclick="closeEmail()">arrow_back</span>
-                <div style="flex:1"></div>
-                <span class="material-icons icon-btn" onclick="archiveCurrent()">archive</span>
-                <span class="material-icons icon-btn" onclick="deleteCurrent()">delete</span>
-                <span class="material-icons icon-btn" onclick="toggleReadStatus()">mail</span>
-            </div>
-            <div class="read-content">
-                <h2 class="msg-subject" id="r-subject">Subject</h2>
-                <div class="msg-meta">
-                    <img id="r-avatar" class="msg-avatar" src="">
-                    <div>
-                        <div style="font-weight:bold; font-size:15px;" id="r-name">Name</div>
-                        <div style="color:#5f6368; font-size:12px;" id="r-time">10:00 AM</div>
-                    </div>
+        <div class="read-content">
+            <h2 class="msg-subject" id="r-subject">Subject</h2>
+            <div class="msg-meta">
+                <img id="r-avatar" style="width:40px; height:40px; border-radius:50%; margin-right:12px; object-fit:cover;">
+                <div>
+                    <div style="font-weight:bold" id="r-name">Name</div>
+                    <div style="font-size:12px; color:#666" id="r-time">Time</div>
                 </div>
-                <hr style="border:0; border-top:1px solid #eee; margin-bottom:20px;">
-                <div class="msg-body" id="r-body">Content</div>
-                
-                <br><br>
-                <button class="compose-btn" style="background:white; border:1px solid #ccc" onclick="replyEmail()">
-                    <span class="material-icons" style="margin-right:10px">reply</span> Reply
-                </button>
             </div>
+            <hr style="border:0; border-top:1px solid #eee; margin-bottom:20px;">
+            <div class="msg-body" id="r-body">Body</div>
         </div>
-
     </div>
 </div>
 
-<!-- Mobile FAB -->
 <div class="fab" onclick="window.location.href='3.html'">
     <span class="material-icons">edit</span>
-</div>
-
-<!-- Toast -->
-<div id="toast">
-    <span id="toast-msg">Email deleted</span>
-    <span class="undo-btn" onclick="undoAction()">Undo</span>
 </div>
 
 <script>
@@ -279,8 +223,6 @@
     let myEmail = "";
     let currentTab = "inbox";
     let allEmails = [];
-    let selectedIds = new Set();
-    let lastAction = null; // { type: 'delete', ids: [], previousFolders: {} }
 
     auth.onAuthStateChanged(user => {
         if (!user) window.location.href = "1.html";
@@ -291,7 +233,6 @@
         }
     });
 
-    // --- NAVIGATION ---
     function toggleSidebar() {
         document.querySelector('.sidebar').classList.toggle('active');
         document.querySelector('.overlay').classList.toggle('active');
@@ -301,207 +242,118 @@
         currentTab = tab;
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById(`nav-${tab}`).classList.add('active');
-        document.querySelector('.sidebar').classList.remove('active');
-        document.querySelector('.overlay').classList.remove('active');
-        
-        selectedIds.clear();
-        updateSelectionUI();
-        closeEmail();
-        renderEmails(); // Re-render with new tab filter
+        toggleSidebar(); // Close sidebar on mobile
+        renderEmails();
     }
 
-    // --- DATA ---
     function loadEmails() {
         const container = document.getElementById('email-list-container');
-        container.innerHTML = '<div style="padding:40px; text-align:center; color:#888">Loading...</div>';
+        container.innerHTML = '<div style="padding:40px; text-align:center;">Loading...</div>';
 
-        // Listen to all emails related to me (Sent or Received)
-        // We do client-side filtering for Tabs to keep Firestore simple and fast
-        db.collection('emails')
-          .orderBy('timestamp', 'desc')
-          .limit(100)
+        db.collection('emails').orderBy('timestamp', 'desc').limit(100)
           .onSnapshot(snapshot => {
               allEmails = [];
-              let inboxCount = 0;
               snapshot.forEach(doc => {
-                  const d = doc.data();
+                  let d = doc.data();
                   d.id = doc.id;
-                  d.folder = d.folder || (d.type === 'api_automated' ? 'inbox' : 'inbox'); // Default
-                  d.isRead = d.isRead || false;
-                  
-                  // Filter valid emails for me
-                  const isReceived = d.to === myEmail;
-                  const isSent = d.from === myEmail;
-
-                  if (isReceived || isSent) {
-                      allEmails.push(d);
-                      if(isReceived && d.folder === 'inbox' && !d.isRead) inboxCount++;
-                  }
+                  d.folder = d.folder || 'inbox';
+                  if (d.to === myEmail || d.from === myEmail) allEmails.push(d);
               });
-              
-              document.getElementById('badge-inbox').innerText = inboxCount > 0 ? inboxCount : "";
               renderEmails();
           });
     }
 
-    // --- RENDER ---
     function renderEmails() {
         const container = document.getElementById('email-list-container');
         const search = document.getElementById('search-input').value.toLowerCase();
         container.innerHTML = "";
 
         const filtered = allEmails.filter(email => {
-            // Tab Logic
             if (currentTab === 'sent') return email.from === myEmail && email.folder !== 'trash';
-            if (currentTab === 'starred') return email.isStarred && email.folder !== 'trash';
+            if (currentTab === 'starred') return email.isStarred;
             if (currentTab === 'trash') return email.folder === 'trash';
-            if (currentTab === 'archive') return email.folder === 'archive';
-            return (email.to === myEmail && (email.folder === 'inbox' || !email.folder)); // Inbox default
-        }).filter(email => {
-            // Search Logic
-            if (!search) return true;
-            return (email.subject + email.message + email.fromName).toLowerCase().includes(search);
-        });
+            return (email.to === myEmail && email.folder === 'inbox'); // Inbox default
+        }).filter(e => !search || (e.subject+e.message).toLowerCase().includes(search));
 
         if (filtered.length === 0) {
-            container.innerHTML = `<div style="padding:60px; text-align:center; color:#888">
-                <span class="material-icons" style="font-size:48px; opacity:0.3">inbox</span><br>Empty</div>`;
+            container.innerHTML = `<div style="padding:60px; text-align:center; color:#888">Empty</div>`;
             return;
         }
 
         filtered.forEach(email => {
-            // Format Date
+            // Display Logic
+            const name = currentTab === 'sent' ? `To: ${email.to}` : (email.fromName || email.from.split('@')[0]);
+            const initial = name.charAt(0).toUpperCase();
             let dateDisplay = "";
             if (email.timestamp) {
-                const date = new Date(email.timestamp.seconds * 1000);
-                const today = new Date();
-                if (date.toDateString() === today.toDateString()) {
-                    dateDisplay = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                } else {
-                    dateDisplay = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-                }
+                const d = new Date(email.timestamp.seconds * 1000);
+                dateDisplay = d.toLocaleDateString([], {month:'short', day:'numeric'});
             }
 
-            // Display Name
-            const displayName = currentTab === 'sent' ? `To: ${email.to}` : (email.fromName || email.from.split('@')[0]);
-            const isSelected = selectedIds.has(email.id);
-            const initial = displayName.charAt(0).toUpperCase();
-            
-            // Avatar Logic
-            let avatarHtml = `<div style="width:32px; height:32px; border-radius:50%; background:#1a73e8; color:white; display:flex; justify-content:center; align-items:center; font-weight:bold">${initial}</div>`;
+            // Colors for Avatar
+            const colors = ['#ef6c00', '#c2185b', '#1976d2', '#388e3c', '#512da8'];
+            const color = colors[initial.charCodeAt(0) % colors.length];
+
+            // Mobile Avatar HTML
+            let avatarHtml = `<div class="mobile-avatar" style="background:${color}">${initial}</div>`;
             if (email.fromPhoto && currentTab !== 'sent') {
-                avatarHtml = `<img src="${email.fromPhoto}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">`;
+                avatarHtml = `<img src="${email.fromPhoto}" class="mobile-avatar">`;
             }
 
             const div = document.createElement('div');
-            div.className = `email-row ${!email.isRead && currentTab !== 'sent' ? 'unread' : ''} ${isSelected ? 'selected' : ''}`;
+            div.className = `email-row ${!email.isRead && currentTab !== 'sent' ? 'unread' : ''}`;
             
-            // HTML Structure
+            // --- THE MAGIC LAYOUT ---
+            // Desktop: Grid (Checkbox, Star, etc hidden via CSS on mobile)
+            // Mobile: Flex (Avatar shows, Text stacks vertically)
             div.innerHTML = `
-                <div class="checkbox" onclick="event.stopPropagation(); toggleSelect('${email.id}')">
-                    <span class="material-icons">${isSelected ? 'check_box' : 'check_box_outline_blank'}</span>
+                <!-- Desktop Columns -->
+                <div class="checkbox"><span class="material-icons" style="color:#ccc">check_box_outline_blank</span></div>
+                <div class="star-icon"><span class="material-icons" style="color:${email.isStarred?'#f4b400':'#ccc'}">${email.isStarred?'star':'star_border'}</span></div>
+                
+                <!-- Mobile Avatar (Hidden on Desktop) -->
+                ${avatarHtml}
+
+                <!-- Text Content Container -->
+                <div class="email-data-container">
+                    <!-- Top Row (Name + Date) -->
+                    <div class="row-top">
+                        <div class="sender">${name}</div>
+                        <div class="date">${dateDisplay}</div>
+                    </div>
+                    
+                    <!-- Bottom Content (Subject + Snippet) -->
+                    <div class="content-prev">
+                        <span class="subject">${email.subject}</span>
+                        <span style="color:#5f6368"> - ${email.message}</span>
+                    </div>
                 </div>
-                <div class="star-icon ${email.isStarred ? 'active' : ''}" onclick="event.stopPropagation(); toggleStar('${email.id}', ${!email.isStarred})">
-                    <span class="material-icons">${email.isStarred ? 'star' : 'star_border'}</span>
-                </div>
-                <div class="sender">${displayName}</div>
-                <div class="content-prev">
-                    <span class="subject">${email.subject}</span>
-                    <span class="snippet"> - ${email.message}</span>
-                </div>
-                <div style="font-size:12px; font-weight:500; text-align:right">${dateDisplay}</div>
             `;
             
-            // Mobile Click (Open) vs Desktop Click (Open)
             div.onclick = () => openEmail(email);
             container.appendChild(div);
         });
     }
 
-    // --- ACTIONS ---
-    function toggleSelect(id) {
-        if (selectedIds.has(id)) selectedIds.delete(id);
-        else selectedIds.add(id);
-        updateSelectionUI();
-        renderEmails();
-    }
-
-    function updateSelectionUI() {
-        const bar = document.getElementById('bulk-bar');
-        if (selectedIds.size > 0) {
-            bar.classList.add('active');
-            document.getElementById('select-count').innerText = `${selectedIds.size} selected`;
-        } else {
-            bar.classList.remove('active');
-        }
-    }
-
-    function clearSelection() {
-        selectedIds.clear();
-        updateSelectionUI();
-        renderEmails();
-    }
-
-    function toggleStar(id, state) {
-        db.collection('emails').doc(id).update({ isStarred: state });
-    }
-
-    function bulkDelete() {
-        processBulkAction('trash', "Moved to Trash");
-    }
-
-    function bulkArchive() {
-        processBulkAction('archive', "Archived");
-    }
-
-    function processBulkAction(targetFolder, toastText) {
-        // Save state for undo
-        lastAction = { type: 'move', ids: Array.from(selectedIds), previousFolders: {} };
-        
-        const batch = db.batch();
-        selectedIds.forEach(id => {
-            const email = allEmails.find(e => e.id === id);
-            lastAction.previousFolders[id] = email.folder; // Save old folder
-            
-            const ref = db.collection('emails').doc(id);
-            if (currentTab === 'trash' && targetFolder === 'trash') {
-                batch.delete(ref); // Permanent delete
-            } else {
-                batch.update(ref, { folder: targetFolder });
-            }
-        });
-        
-        batch.commit();
-        showToast(toastText, true);
-        clearSelection();
-    }
-
-    // --- READ VIEW ---
     let currentEmailId = null;
 
     function openEmail(data) {
         currentEmailId = data.id;
-        document.getElementById('view-list').style.display = 'none';
         document.getElementById('view-read').style.display = 'flex';
-        document.getElementById('bulk-bar').style.display = 'none';
-        document.querySelector('.fab').style.display = 'none'; // Hide FAB in read mode
-
+        
         document.getElementById('r-subject').innerText = data.subject;
         document.getElementById('r-body').innerText = data.message;
         
         const name = currentTab === 'sent' ? `To: ${data.to}` : (data.fromName || data.from);
         document.getElementById('r-name').innerText = name;
         
-        // Avatar
         const img = document.getElementById('r-avatar');
         if (data.fromPhoto && currentTab !== 'sent') {
             img.src = data.fromPhoto;
         } else {
-            // Use dummy avatar gen if no photo
             img.src = `https://ui-avatars.com/api/?name=${name}&background=random`;
         }
 
-        // Mark read
         if (!data.isRead && currentTab !== 'sent') {
             db.collection('emails').doc(data.id).update({ isRead: true });
         }
@@ -509,67 +361,13 @@
 
     function closeEmail() {
         document.getElementById('view-read').style.display = 'none';
-        document.getElementById('view-list').style.display = 'flex';
-        document.getElementById('bulk-bar').style.display = selectedIds.size > 0 ? 'flex' : 'none';
-        document.querySelector('.fab').style.display = ''; // Restore FAB
-        currentEmailId = null;
     }
 
     function deleteCurrent() {
-        if (!currentEmailId) return;
-        selectedIds.clear();
-        selectedIds.add(currentEmailId);
-        bulkDelete();
+        if(!currentEmailId) return;
+        db.collection('emails').doc(currentEmailId).update({ folder: 'trash' });
         closeEmail();
     }
-
-    function archiveCurrent() {
-        if (!currentEmailId) return;
-        selectedIds.clear();
-        selectedIds.add(currentEmailId);
-        bulkArchive();
-        closeEmail();
-    }
-    
-    function replyEmail() {
-        window.location.href = "3.html";
-    }
-
-    // --- TOAST & UNDO ---
-    let toastTimeout;
-    function showToast(msg, allowUndo) {
-        const t = document.getElementById('toast');
-        document.getElementById('toast-msg').innerText = msg;
-        document.querySelector('.undo-btn').style.display = allowUndo ? 'block' : 'none';
-        
-        t.classList.add('active');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(() => {
-            t.classList.remove('active');
-        }, 4000);
-    }
-
-    function undoAction() {
-        if (!lastAction) return;
-        
-        if (lastAction.type === 'move') {
-            const batch = db.batch();
-            lastAction.ids.forEach(id => {
-                const prevFolder = lastAction.previousFolders[id];
-                const ref = db.collection('emails').doc(id);
-                batch.update(ref, { folder: prevFolder });
-            });
-            batch.commit();
-        }
-        
-        document.getElementById('toast').classList.remove('active');
-        lastAction = null;
-    }
-
-    function showProfile() {
-        alert("Logged in as: " + myEmail);
-    }
-
 </script>
 </body>
 </html>
