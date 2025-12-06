@@ -38,19 +38,19 @@
             transition: transform 0.3s ease; border-right: 1px solid #eaecf0;
         }
         .compose-btn {
-            background: white; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.2); border-radius: 24px; padding: 15px 24px;
-            display: flex; align-items: center; color: #3c4043; font-weight: 500; cursor: pointer; width: fit-content;
-            margin: 10px 0 20px 10px; transition: box-shadow 0.2s;
+            background: #c2e7ff; color: #001d35; border-radius: 16px; padding: 16px 24px;
+            display: flex; align-items: center; font-weight: 500; cursor: pointer; width: fit-content;
+            margin: 10px 0 20px 10px; transition: box-shadow 0.2s; border: none; font-size: 14px;
         }
-        .compose-btn:hover { box-shadow: 0 4px 6px 0 rgba(60,64,67,0.3); }
-        .compose-btn .material-icons { margin-right: 12px; color: #ea4335; }
+        .compose-btn:hover { box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3); }
+        .compose-btn .material-icons { margin-right: 12px; font-size: 20px; }
         
         .nav-item {
             padding: 10px 12px 10px 24px; border-radius: 0 24px 24px 0; cursor: pointer; color: #202124;
-            display: flex; align-items: center; margin-bottom: 4px; font-size: 14px;
+            display: flex; align-items: center; margin-bottom: 4px; font-size: 14px; font-weight: 500;
         }
         .nav-item:hover { background: #f1f3f4; }
-        .nav-item.active { background: #e8f0fe; color: #1967d2; font-weight: bold; }
+        .nav-item.active { background: #d3e3fd; color: #001d35; font-weight: bold; }
         .nav-item .material-icons { margin-right: 18px; font-size: 20px; }
 
         /* --- MAIN CONTENT AREA --- */
@@ -62,16 +62,21 @@
         .email-scroll { flex: 1; overflow-y: auto; }
         
         .email-row {
-            display: grid; grid-template-columns: 40px 1fr auto; gap: 15px; padding: 12px 16px;
+            display: grid; grid-template-columns: 50px 1fr auto; gap: 10px; padding: 10px 16px;
             border-bottom: 1px solid #f1f3f4; cursor: pointer; align-items: center; transition: background 0.1s;
         }
         .email-row:hover { background: #f9f9f9; box-shadow: inset 1px 0 0 #dadce0; z-index: 1; }
-        .avatar { width: 36px; height: 36px; border-radius: 50%; background: #e8f0fe; color: #1967d2; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
+        
+        /* Avatar Logic */
+        .avatar-container { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .avatar-text { width: 36px; height: 36px; border-radius: 50%; background: #ef6c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
+        .avatar-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+
         .email-info { display: flex; flex-direction: column; overflow: hidden; }
         .sender-name { font-weight: 700; color: #202124; font-size: 15px; }
         .email-subject { color: #202124; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .email-snippet { color: #5f6368; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .email-date { font-size: 12px; color: #5f6368; white-space: nowrap; }
+        .email-date { font-size: 12px; color: #5f6368; white-space: nowrap; font-weight: 500;}
 
         /* --- FULL PAGE EMAIL READ VIEW --- */
         #view-read { display: none; height: 100%; flex-direction: column; background: white; }
@@ -87,7 +92,7 @@
         .meta-sender { font-weight: bold; font-size: 14px; color: #202124; }
         .meta-time { font-size: 12px; color: #5f6368; }
         
-        .read-body { font-size: 15px; line-height: 1.6; color: #202124; white-space: pre-wrap; }
+        .read-body { font-size: 15px; line-height: 1.6; color: #202124; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; }
 
         /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 768px) {
@@ -97,7 +102,6 @@
             }
             .sidebar.active { transform: translateX(0); }
             
-            /* Overlay when sidebar is open */
             .overlay {
                 display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                 background: rgba(0,0,0,0.5); z-index: 90;
@@ -105,8 +109,8 @@
             .overlay.active { display: block; }
             
             .content-area { margin: 0; border-radius: 0; }
-            .email-row { grid-template-columns: 40px 1fr; }
-            .email-date { display: none; } /* Hide date on very small screens in list */
+            .email-row { grid-template-columns: 50px 1fr; }
+            .email-date { display: none; } 
         }
     </style>
 </head>
@@ -130,9 +134,9 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="compose-btn" onclick="window.location.href='3.html'">
+        <button class="compose-btn" onclick="window.location.href='3.html'">
             <span class="material-icons">edit</span> Compose
-        </div>
+        </button>
         
         <div class="nav-item active" id="btn-inbox" onclick="switchTab('inbox')">
             <span class="material-icons">inbox</span> Inbox
@@ -149,8 +153,7 @@
         <div id="view-list">
             <div class="list-header" id="list-title">Inbox</div>
             <div class="email-scroll" id="email-list-container">
-                <!-- Emails injected here -->
-                <div style="padding:20px; text-align:center; color:#888">Loading emails...</div>
+                <div style="padding:20px; text-align:center; color:#888">Loading...</div>
             </div>
         </div>
 
@@ -159,26 +162,29 @@
             <div class="read-toolbar">
                 <span class="material-icons icon-btn" onclick="closeEmail()" title="Back">arrow_back</span>
                 <div style="flex:1"></div>
-                <span class="material-icons icon-btn" title="Archive">archive</span>
                 <span class="material-icons icon-btn" title="Delete">delete</span>
             </div>
             <div class="read-content">
                 <h2 class="read-subject" id="r-subject">Subject Here</h2>
                 
                 <div class="read-meta">
-                    <div class="avatar" id="r-avatar">A</div>
+                    <div class="avatar-container" id="r-avatar-placeholder">
+                        <!-- Avatar Injected Here -->
+                    </div>
                     <div class="meta-text">
                         <div class="meta-sender" id="r-sender">Sender Name</div>
                         <div class="meta-time" id="r-time">Oct 24, 10:00 AM</div>
                     </div>
                 </div>
                 
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+
                 <div class="read-body" id="r-body">
-                    Email content goes here...
+                    Email content...
                 </div>
                 
                 <br><br>
-                <button class="compose-btn" style="margin:0; border:1px solid #ccc" onclick="replyEmail()">
+                <button class="compose-btn" style="background:white; border:1px solid #ccc; margin:0;" onclick="replyEmail()">
                     <span class="material-icons">reply</span> Reply
                 </button>
             </div>
@@ -188,7 +194,6 @@
 </div>
 
 <script>
-    // Config
     const firebaseConfig = {
         apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
         authDomain: "xperts-metadata.firebaseapp.com",
@@ -205,9 +210,8 @@
     let myEmail = "";
     let currentTab = "inbox";
     let unsubscribe = null;
-    let currentEmailData = null; // Store data of opened email
+    let currentEmailData = null;
 
-    // Auth Check
     auth.onAuthStateChanged(user => {
         if (!user) window.location.href = "1.html";
         else {
@@ -216,27 +220,22 @@
         }
     });
 
-    // Sidebar Toggle
     function toggleSidebar() {
         document.querySelector('.sidebar').classList.toggle('active');
         document.querySelector('.overlay').classList.toggle('active');
     }
 
-    // Switch Inbox/Sent
     function switchTab(tab) {
         currentTab = tab;
-        // Update UI
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById(`btn-${tab}`).classList.add('active');
         document.getElementById('list-title').innerText = tab === 'inbox' ? "Inbox" : "Sent Items";
         
-        // Mobile: Close sidebar after selection
+        // Hide sidebar on mobile selection
         document.querySelector('.sidebar').classList.remove('active');
         document.querySelector('.overlay').classList.remove('active');
 
-        // Show List, Hide Read
         closeEmail();
-
         loadEmails();
     }
 
@@ -256,22 +255,32 @@
         unsubscribe = query.onSnapshot(snapshot => {
             container.innerHTML = "";
             if (snapshot.empty) {
-                container.innerHTML = '<div style="padding:40px; text-align:center; color:#ccc"><span class="material-icons" style="font-size:48px">inbox</span><br>Nothing here</div>';
+                container.innerHTML = '<div style="padding:40px; text-align:center; color:#ccc"><span class="material-icons" style="font-size:48px; color:#ddd">inbox</span><br><br>Nothing in ' + currentTab + '</div>';
                 return;
             }
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                // Safe handling of missing names
                 const senderName = data.fromName || data.from.split('@')[0];
                 const displayName = currentTab === 'inbox' ? senderName : `To: ${data.to}`;
-                const initial = displayName.charAt(0).toUpperCase();
                 
-                // Format Date
+                // --- AVATAR LOGIC ---
+                let avatarHtml;
+                // If it's Inbox AND we have a company photo, use IMG. Else use Initials.
+                if (currentTab === 'inbox' && data.fromPhoto) {
+                    avatarHtml = `<img src="${data.fromPhoto}" class="avatar-img">`;
+                } else {
+                    const initial = displayName.charAt(0).toUpperCase();
+                    // Colors for avatars
+                    const colors = ['#ef6c00', '#c2185b', '#1976d2', '#388e3c', '#512da8'];
+                    const color = colors[initial.charCodeAt(0) % colors.length];
+                    avatarHtml = `<div class="avatar-text" style="background:${color}">${initial}</div>`;
+                }
+
+                // --- DATE LOGIC ---
                 let dateStr = "";
                 if (data.timestamp) {
                     const date = new Date(data.timestamp.seconds * 1000);
-                    // If today, show time, else show date
                     if(new Date().toDateString() === date.toDateString()){
                         dateStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     } else {
@@ -279,11 +288,10 @@
                     }
                 }
 
-                // Create Row Element
                 const div = document.createElement('div');
                 div.className = 'email-row';
                 div.innerHTML = `
-                    <div class="avatar">${initial}</div>
+                    <div class="avatar-container">${avatarHtml}</div>
                     <div class="email-info">
                         <div class="sender-name">${displayName}</div>
                         <div class="email-subject">${data.subject}</div>
@@ -292,34 +300,38 @@
                     <div class="email-date">${dateStr}</div>
                 `;
                 
-                // Add Click Event to Open Full Page
                 div.onclick = () => openEmail(data);
-                
                 container.appendChild(div);
             });
         });
     }
 
-    // --- FULL PAGE LOGIC ---
-
     function openEmail(data) {
         currentEmailData = data;
         
-        // Populate Data
         document.getElementById('r-subject').innerText = data.subject;
         document.getElementById('r-body').innerText = data.message;
         
         const name = currentTab === 'inbox' ? (data.fromName || data.from) : `To: ${data.to}`;
-        const emailAddr = currentTab === 'inbox' ? `<${data.from}>` : '';
+        const emailAddr = currentTab === 'inbox' ? data.from : data.to;
         
-        document.getElementById('r-sender').innerText = `${name} ${emailAddr}`;
-        document.getElementById('r-avatar').innerText = name.charAt(0).toUpperCase();
+        document.getElementById('r-sender').innerHTML = `${name} <span style="font-weight:normal; color:#5f6368">&lt;${emailAddr}&gt;</span>`;
         
         if (data.timestamp) {
             document.getElementById('r-time').innerText = new Date(data.timestamp.seconds * 1000).toLocaleString();
         }
 
-        // Toggle Views
+        // --- FULL PAGE AVATAR LOGIC ---
+        const avatarPlace = document.getElementById('r-avatar-placeholder');
+        if (currentTab === 'inbox' && data.fromPhoto) {
+            avatarPlace.innerHTML = `<img src="${data.fromPhoto}" class="avatar-img">`;
+        } else {
+            const initial = name.charAt(0).toUpperCase();
+            const colors = ['#ef6c00', '#c2185b', '#1976d2', '#388e3c', '#512da8'];
+            const color = colors[initial.charCodeAt(0) % colors.length];
+            avatarPlace.innerHTML = `<div class="avatar-text" style="background:${color}">${initial}</div>`;
+        }
+
         document.getElementById('view-list').style.display = 'none';
         document.getElementById('view-read').style.display = 'flex';
     }
@@ -331,12 +343,8 @@
     }
 
     function replyEmail() {
-        if(!currentEmailData) return;
-        // You could redirect to 3.html and pass params via URL, but simpler for now:
-        window.location.href = "3.html";
-        // To be fancy later, use: window.location.href = `3.html?replyTo=${currentEmailData.from}&subject=Re:${currentEmailData.subject}`;
+        if(currentEmailData) window.location.href = "3.html";
     }
-
 </script>
 </body>
 </html>
