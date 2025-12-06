@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer API Console</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #202124; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #303134; padding: 40px; border-radius: 12px; width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { color: #8ab4f8; margin-top: 0; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #bdc1c6; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; background: #202124; border: 1px solid #5f6368; color: white; border-radius: 4px; outline: none; box-sizing: border-box; }
+        input:focus { border-color: #8ab4f8; }
+        button { width: 100%; padding: 15px; background: #8ab4f8; color: #202124; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #aecbfa; }
+        
+        .result-box { margin-top: 30px; padding: 15px; background: #171717; border: 1px solid #5f6368; border-radius: 4px; display: none; word-break: break-all; }
+        .api-label { color: #81c995; font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block; }
+        code { color: #e8eaed; font-family: monospace; display: block; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2><span class="material-icons" style="vertical-align:middle">code</span> Generate API Key</h2>
+    <p style="color:#9aa0a6; font-size:14px;">Register your company to send automated emails to @pplx.com users.</p>
+    
+    <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" id="company" placeholder="e.g. Netflix, Amazon">
+    </div>
+    <div class="form-group">
+        <label>Sender Email Address</label>
+        <input type="text" id="sender_email" placeholder="e.g. no-reply@netflix.com">
+    </div>
+    <div class="form-group">
+        <label>Default Template Type</label>
+        <select id="type">
+            <option value="OTP">OTP Verification</option>
+            <option value="CONTACT">Contact Us / Support</option>
+            <option value="ALERT">Security Alert</option>
+            <option value="PROMO">Promotion / Marketing</option>
+        </select>
+    </div>
+
+    <button onclick="generateKey()">Generate API Credentials</button>
+
+    <div class="result-box" id="result">
+        <span class="api-label">YOUR ENCRYPTION KEY:</span>
+        <code id="display-key"></code>
+        <span class="api-label">EXAMPLE API URL:</span>
+        <code id="display-url" style="color:#8ab4f8"></code>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function generateKey() {
+        const company = document.getElementById('company').value;
+        const email = document.getElementById('sender_email').value;
+        const type = document.getElementById('type').value;
+
+        if(!company || !email) { alert("Please fill details"); return; }
+
+        // Create a unique config object
+        const apiData = {
+            company: company,
+            email: email,
+            defaultType: type,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Add to Database to get a Document ID (This is our Secure Key)
+        const docRef = await db.collection('api_partners').add(apiData);
+        const apiKey = docRef.id;
+
+        // Show Result
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('display-key').innerText = apiKey;
+        
+        // Build Example URL
+        const domain = window.location.href.replace('4.html', '5.html');
+        const exampleUrl = `${domain}?encykey=${apiKey}&sendto=USER_EMAIL&msg=Your_Message_Here`;
+        document.getElementById('display-url').innerText = exampleUrl;
+    }
+</script>
+</body>
+</html>
